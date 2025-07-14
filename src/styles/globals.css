@@ -1,0 +1,206 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+ 
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+ 
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+ 
+    --radius: 0.5rem;
+ 
+    --sidebar-background: 0 0% 98%;
+ 
+    --sidebar-foreground: 240 5.3% 26.1%;
+ 
+    --sidebar-primary: 240 5.9% 10%;
+ 
+    --sidebar-primary-foreground: 0 0% 98%;
+ 
+    --sidebar-accent: 240 4.8% 95.9%;
+ 
+    --sidebar-accent-foreground: 240 5.9% 10%;
+ 
+    --sidebar-border: 220 13% 91%;
+ 
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+ 
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+ 
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+ 
+@layer base {
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* 대시보드 스코프 - 대시보드 영역에만 shadcn/ui 스타일 적용 */
+.dashboard-scope {
+  /* 기본 스타일 재설정 */
+  font-family: var(--font-sans) !important;
+  color: hsl(var(--foreground)) !important;
+  background-color: hsl(var(--background)) !important;
+  line-height: 1.5 !important;
+  -webkit-text-size-adjust: 100% !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+.dashboard-scope table,
+.dashboard-scope tr,
+.dashboard-scope td,
+.dashboard-scope div,
+.dashboard-scope span {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 대시보드 스코프 내에서만 shadcn/ui 컴포넌트 스타일 적용 */
+.dashboard-scope .btn,
+.dashboard-scope .form-control,
+.dashboard-scope .card,
+.dashboard-scope .nav,
+.dashboard-scope .navbar,
+.dashboard-scope .dropdown,
+.dashboard-scope .modal {
+  /* Bootstrap 스타일 재정의 */
+  all: unset !important;
+}
+
+/* 대시보드 스코프 내에서 기존 Bootstrap 스타일 무효화 */
+.dashboard-scope .container,
+.dashboard-scope .container-fluid,
+.dashboard-scope .row,
+.dashboard-scope .col,
+.dashboard-scope [class^="col-"] {
+  all: revert !important;
+  box-sizing: border-box !important;
+}
+
+/* 대시보드 스코프 내에서 Tailwind 스타일 우선 적용 */
+.dashboard-scope * {
+  box-sizing: border-box !important;
+}
+
+
+
+/* Date Picker 달력 테이블 요소의 불필요한 선 제거 */
+.dashboard-scope .group\/calendar table,
+.dashboard-scope .group\/calendar tr,
+.dashboard-scope .group\/calendar td {
+  border: none !important;
+}
+
+/* 대시보드 내 버튼 스타일 충돌 방지 */
+.dashboard-scope button,
+.dashboard-scope .button {
+  background-image: none !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+/* 대시보드 내 링크 스타일 충돌 방지 */
+.dashboard-scope a {
+  text-decoration: none !important;
+}
+
+/* 대시보드 내 헤더/타이틀 스타일 충돌 방지 */
+.dashboard-scope h1,
+.dashboard-scope h2,
+.dashboard-scope h3,
+.dashboard-scope h4,
+.dashboard-scope h5,
+.dashboard-scope h6,
+.dashboard-scope .h1,
+.dashboard-scope .h2,
+.dashboard-scope .h3,
+.dashboard-scope .h4,
+.dashboard-scope .h5,
+.dashboard-scope .h6 {
+  font-family: var(--font-sans) !important;
+  line-height: 1.2 !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* 대시보드 내 폼 요소 스타일 충돌 방지 */
+.dashboard-scope input,
+.dashboard-scope select,
+.dashboard-scope textarea {
+  font-family: var(--font-sans) !important;
+  line-height: 1.5 !important;
+  color: hsl(var(--foreground)) !important;
+  background-color: transparent !important;
+  border-radius: var(--radius) !important;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
