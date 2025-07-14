@@ -17,6 +17,8 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { logError, logDebug } from '@/utils/logger';
 
+export const dynamic = 'force-dynamic';
+
 // 캐시 재검증 시간 설정 (초 단위, 1시간)
 export const revalidate = 3600;
 

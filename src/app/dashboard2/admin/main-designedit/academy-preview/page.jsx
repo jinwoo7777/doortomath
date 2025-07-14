@@ -321,7 +321,7 @@ export default function Page() {
               <CardContent>
                 <div className="relative w-full pt-[30.25%] rounded-lg overflow-hidden">
                   <img 
-                    src="/admin_images/rate_section.png" 
+                    src="/admin_images/academy_preview.png" 
                     alt="카테고리 섹션 미리보기" 
                     className="absolute top-0 left-0 w-full h-full object-cover rounded-md shadow-sm"
                   />
