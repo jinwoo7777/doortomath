@@ -34,7 +34,8 @@ import {
   FileSpreadsheet,
   Download,
   Check,
-  AlertTriangle
+  AlertTriangle,
+  Search
 } from 'lucide-react';
 import {
   Dialog,
@@ -47,6 +48,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import StudentExamScoresModal from './StudentExamScoresModal';
 import { Switch } from "@/components/ui/switch";
 import { 
   Table,
@@ -68,6 +70,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert";
+import StudentCoursesModal from './StudentCoursesModal';
 
 const StudentManagementContent = () => {
   const { session, userRole } = useAuth();
@@ -79,6 +82,7 @@ const StudentManagementContent = () => {
   const [studentGrades, setStudentGrades] = useState([]);
   const [selectedTeacher, setSelectedTeacher] = useState('all');
   const [selectedGrade, setSelectedGrade] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentStudent, setCurrentStudent] = useState(null);
@@ -91,6 +95,12 @@ const StudentManagementContent = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadResults, setUploadResults] = useState(null);
+  
+  // 수강 강의 모달 관련 state
+  const [isCoursesModalOpen, setIsCoursesModalOpen] = useState(false);
+  const [selectedStudentForCourses, setSelectedStudentForCourses] = useState(null);
+  const [selectedStudentForScores, setSelectedStudentForScores] = useState(null);
+  const [isExamScoresModalOpen, setIsExamScoresModalOpen] = useState(false);
   
   const [studentForm, setStudentForm] = useState({
     full_name: '',
@@ -623,6 +633,32 @@ const StudentManagementContent = () => {
     return studentSchedules.filter(ss => ss.student_id === studentId);
   };
 
+  const openCoursesModal = (student) => {
+    setSelectedStudentForCourses(student);
+    setIsCoursesModalOpen(true);
+  };
+
+  const closeCoursesModal = () => {
+    setIsCoursesModalOpen(false);
+    setSelectedStudentForCourses(null);
+  };
+
+  const handleViewExamScores = (student) => {
+    setSelectedStudentForScores(student);
+    setIsExamScoresModalOpen(true);
+  };
+
+  const closeExamScoresModal = () => {
+    setIsExamScoresModalOpen(false);
+    setSelectedStudentForScores(null);
+  };
+
+  const handleCoursesUpdate = () => {
+    // 학생 수강 정보가 변경되었을 때 데이터 새로고침
+    fetchStudentSchedules();
+    fetchStudents();
+  };
+
   const getDayName = (dayOfWeek) => {
     const days = ['', '월', '화', '수', '목', '금', '토', '일'];
     return days[dayOfWeek] || '';
@@ -1015,7 +1051,21 @@ const StudentManagementContent = () => {
           <CardTitle className="text-sm">필터 옵션</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="search-input" className="min-w-fit">검색:</Label>
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  id="search-input"
+                  placeholder="이름, 이메일, 연락처로 검색..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
             <div className="flex items-center gap-2">
               <Label htmlFor="grade-filter" className="min-w-fit">학교급:</Label>
               <Select value={selectedGrade} onValueChange={setSelectedGrade}>
@@ -1031,12 +1081,13 @@ const StudentManagementContent = () => {
               </Select>
             </div>
 
-            {selectedGrade !== 'all' && (
+            {(selectedGrade !== 'all' || searchQuery) && (
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={() => {
                   setSelectedGrade('all');
+                  setSearchQuery('');
                 }}
               >
                 필터 초기화
@@ -1052,12 +1103,21 @@ const StudentManagementContent = () => {
           <h2 className="text-lg font-semibold">
             전체 학원생 목록
             {selectedGrade !== 'all' && ` (${selectedGrade})`}
+            {searchQuery && ` - "${searchQuery}" 검색`}
           </h2>
           <p className="text-sm text-muted-foreground">
             {(() => {
               let filteredStudents = students;
               if (selectedGrade !== 'all') {
                 filteredStudents = filteredStudents.filter(s => s.grade === selectedGrade);
+              }
+              if (searchQuery) {
+                filteredStudents = filteredStudents.filter(s => 
+                  s.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  s.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  s.phone?.includes(searchQuery) ||
+                  s.parent_phone?.includes(searchQuery)
+                );
               }
               return `${filteredStudents.length}명의 학원생이 조회되었습니다.`;
             })()}
@@ -1095,22 +1155,31 @@ const StudentManagementContent = () => {
             if (selectedGrade !== 'all') {
               filteredStudents = filteredStudents.filter(s => s.grade === selectedGrade);
             }
+            if (searchQuery) {
+              filteredStudents = filteredStudents.filter(s => 
+                s.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                s.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                s.phone?.includes(searchQuery) ||
+                s.parent_phone?.includes(searchQuery)
+              );
+            }
             
             return filteredStudents.length === 0 ? (
               <div className="text-center py-8">
                 <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-lg font-medium">
-                  {selectedGrade !== 'all' ? '조건에 맞는 학원생이 없습니다' : '등록된 학원생이 없습니다'}
+                  {selectedGrade !== 'all' || searchQuery ? '조건에 맞는 학원생이 없습니다' : '등록된 학원생이 없습니다'}
                 </p>
                 <p className="text-muted-foreground mb-4">
-                  {selectedGrade !== 'all' ? '필터 조건을 변경해보세요.' : '첫 번째 학원생을 추가해보세요.'}
+                  {selectedGrade !== 'all' || searchQuery ? '필터 조건을 변경해보세요.' : '첫 번째 학원생을 추가해보세요.'}
                 </p>
                 <div className="flex justify-center gap-2">
-                  {selectedGrade !== 'all' ? (
+                  {selectedGrade !== 'all' || searchQuery ? (
                     <Button 
                       variant="outline" 
                       onClick={() => {
                         setSelectedGrade('all');
+                        setSearchQuery('');
                       }}
                     >
                       필터 초기화
@@ -1211,10 +1280,15 @@ const StudentManagementContent = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openCoursesModal(student)}
+                              className="flex items-center gap-1 h-auto p-1"
+                            >
                               <BookOpen className="h-3 w-3 text-muted-foreground" />
                               <span className="text-sm">{enrolledSchedules.length}개</span>
-                            </div>
+                            </Button>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -1238,6 +1312,14 @@ const StudentManagementContent = () => {
                                 title="편집"
                               >
                                 <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewExamScores(student)}
+                                title="성적 확인"
+                              >
+                                <BarChart3 className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="ghost"
@@ -1360,14 +1442,15 @@ const StudentManagementContent = () => {
                               )}
                             </TableCell>
                             <TableCell>
-                              <div className="space-y-1">
-                                {studentScheduleData.map((ss, index) => (
-                                  <div key={index} className="flex items-center gap-1">
-                                    <BookOpen className="h-3 w-3 text-muted-foreground" />
-                                    <span className="text-sm">{ss.schedules?.subject}</span>
-                                  </div>
-                                ))}
-                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openCoursesModal(student)}
+                                className="flex items-center gap-1 h-auto p-1"
+                              >
+                                <BookOpen className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-sm">{getStudentSchedules(student.id).length}개</span>
+                              </Button>
                             </TableCell>
                             <TableCell>
                               <div className="space-y-1">
@@ -1409,6 +1492,14 @@ const StudentManagementContent = () => {
                                   title="편집"
                                 >
                                   <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleViewExamScores(student)}
+                                  title="성적 확인"
+                                >
+                                  <BarChart3 className="h-4 w-4" />
                                 </Button>
                               </div>
                             </TableCell>
@@ -1535,10 +1626,15 @@ const StudentManagementContent = () => {
                               )}
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openCoursesModal(student)}
+                                className="flex items-center gap-1 h-auto p-1"
+                              >
                                 <BookOpen className="h-3 w-3 text-muted-foreground" />
                                 <span className="text-sm">{enrolledSchedules.length}개</span>
-                              </div>
+                              </Button>
                             </TableCell>
                             <TableCell>
                               <div className="space-y-1">
@@ -1571,6 +1667,14 @@ const StudentManagementContent = () => {
                                   title="편집"
                                 >
                                   <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleViewExamScores(student)}
+                                  title="성적 확인"
+                                >
+                                  <BarChart3 className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
@@ -1737,10 +1841,15 @@ const StudentManagementContent = () => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openCoursesModal(student)}
+                                className="flex items-center gap-1 h-auto p-1"
+                              >
                                 <BookOpen className="h-3 w-3 text-muted-foreground" />
                                 <span className="text-sm">{enrolledSchedules.length}개</span>
-                              </div>
+                              </Button>
                             </TableCell>
                             <TableCell>
                               <Badge variant={student.status === 'active' ? "default" : "secondary"}>
@@ -1757,6 +1866,14 @@ const StudentManagementContent = () => {
                                   title="편집"
                                 >
                                   <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleViewExamScores(student)}
+                                  title="성적 확인"
+                                >
+                                  <BarChart3 className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
@@ -1865,10 +1982,15 @@ const StudentManagementContent = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openCoursesModal(student)}
+                            className="flex items-center gap-1 h-auto p-1"
+                          >
                             <BookOpen className="h-3 w-3 text-muted-foreground" />
                             <span className="text-sm">{enrolledSchedules.length}개</span>
-                          </div>
+                          </Button>
                         </TableCell>
                         <TableCell>
                           {student.notes && (
@@ -2479,6 +2601,21 @@ const StudentManagementContent = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 수강 강의 관리 모달 */}
+      <StudentCoursesModal
+        isOpen={isCoursesModalOpen}
+        onClose={closeCoursesModal}
+        student={selectedStudentForCourses}
+        onUpdate={handleCoursesUpdate}
+      />
+
+      {/* 시험 성적 관리 모달 */}
+      <StudentExamScoresModal
+        isOpen={isExamScoresModalOpen}
+        onClose={closeExamScoresModal}
+        student={selectedStudentForScores}
+      />
     </div>
   );
 };

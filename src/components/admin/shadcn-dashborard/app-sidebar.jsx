@@ -137,17 +137,22 @@ const data = {
         { title: "관심관리 학원생 리스트", url: "/dashboard2/admin/student-management?tab=priority" },
       ],
     },
+    {
+      title: "자동 채점 관리",
+      url: "/dashboard2/admin/grading-management",
+      icon: BookOpenCheck,
+      items: [
+        { title: "답안 키 목록", url: "/dashboard2/admin/grading-management?tab=list" },
+        { title: "답안 키 생성", url: "/dashboard2/admin/grading-management?tab=create" },
+        { title: "엑셀 업로드", url: "/dashboard2/admin/grading-management?tab=excel" },
+      ],
+    },
   ],
   projects: [
     {
       name: "시험문제 관리",
       url: "/dashboard2/admin?path=/dashboard2/admin/exam-management",
       icon: BookOpen,
-    },
-    {
-      name: "채첨 관리",
-      url: "/dashboard2/admin?path=/dashboard2/admin/grading-management",
-      icon: BookOpenCheck,
     },
     {
       name: "매출 관리",
