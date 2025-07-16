@@ -23,6 +23,7 @@ import InquiryManagementContent from '@/components/admin/dashboard/inquiry-manag
 import SalesManagementContent from '@/components/admin/dashboard/sales-management/SalesManagementContent';
 import SalesByClassContent from '@/components/admin/dashboard/sales-management/SalesByClassContent';
 import SalesByInstructorContent from '@/components/admin/dashboard/sales-management/SalesByInstructorContent';
+import DashboardMainContent from '@/components/admin/dashboard/dashboard-main/DashboardMainContent';
 
 import {
   Breadcrumb,
@@ -63,7 +64,7 @@ export default function Page() {
     if (path) {
       setCurrentPage(path);
     } else {
-      setCurrentPage('/dashboard2/admin'); // 기본 페이지를 대시보드로 변경
+      setCurrentPage('/dashboard2/admin/dashboard-main'); // 기본 페이지를 대시보드 메인으로 설정
     }
   }, [searchParams]);
 
@@ -108,7 +109,7 @@ export default function Page() {
                   const tab = searchParams.get('tab');
                   
                   // 대시보드 메인 페이지
-                  if (currentPage === '/dashboard2/admin' || !currentPage) {
+                  if (currentPage === '/dashboard2/admin' || currentPage === '/dashboard2/admin/dashboard-main' || !currentPage) {
                     return null;
                   }
                   
@@ -368,69 +369,8 @@ export default function Page() {
           {/* 여기에 동적으로 로드될 페이지 컨텐츠가 들어갑니다 */}
           
           {/* 대시보드 메인 페이지 */}
-          {(currentPage === '/dashboard2/admin' || !currentPage) && (
-            <div className="flex flex-1 flex-col gap-6">
-              <div className="border-b pb-4">
-                <h1 className="text-3xl font-bold">관리자 대시보드</h1>
-                <p className="text-muted-foreground">수학의문 학원 관리 시스템에 오신 것을 환영합니다.</p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold">메인페이지 관리</h2>
-                  <div className="space-y-2">
-                    <a href="/dashboard2/admin?path=/dashboard2/admin/herosection" 
-                       className="block p-3 border rounded hover:bg-gray-50 transition-colors">
-                      히어로섹션
-                    </a>
-                    <a href="/dashboard2/admin?path=/dashboard2/admin/admission-status" 
-                       className="block p-3 border rounded hover:bg-gray-50 transition-colors">
-                      SKY입학현황
-                    </a>
-                    <a href="/dashboard2/admin?path=/dashboard2/admin/main-about" 
-                       className="block p-3 border rounded hover:bg-gray-50 transition-colors">
-                      학원소개
-                    </a>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold">콘텐츠 관리</h2>
-                  <div className="space-y-2">
-                    <a href="/dashboard2/admin?path=/dashboard2/admin/blog-editor&tab=list" 
-                       className="block p-3 border rounded hover:bg-gray-50 transition-colors">
-                      블로그 포스트 목록
-                    </a>
-                    <a href="/dashboard2/admin?path=/dashboard2/admin/blog-editor&tab=featured" 
-                       className="block p-3 border rounded hover:bg-gray-50 transition-colors">
-                      메인페이지 설정
-                    </a>
-                    <a href="/dashboard2/admin?path=/dashboard2/admin/class-description&tab=list" 
-                       className="block p-3 border rounded hover:bg-gray-50 transition-colors">
-                      수업설명 관리
-                    </a>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold">시스템 관리</h2>
-                  <div className="space-y-2">
-                    <a href="/dashboard2/admin?path=/dashboard2/admin/schedule-management" 
-                       className="block p-3 border rounded hover:bg-gray-50 transition-colors">
-                      수업시간표 관리
-                    </a>
-                    <a href="#" 
-                       className="block p-3 border rounded hover:bg-gray-50 transition-colors opacity-50 cursor-not-allowed">
-                      강사 관리 (준비중)
-                    </a>
-                    <a href="#" 
-                       className="block p-3 border rounded hover:bg-gray-50 transition-colors opacity-50 cursor-not-allowed">
-                      학원생 관리 (준비중)
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {(currentPage === '/dashboard2/admin' || currentPage === '/dashboard2/admin/dashboard-main' || !currentPage) && (
+            <DashboardMainContent />
           )}
           
           {currentPage === '/dashboard2/admin/herosection' && <HerosectionPage />}

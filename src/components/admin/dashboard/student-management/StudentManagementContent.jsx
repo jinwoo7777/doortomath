@@ -35,8 +35,15 @@ import {
   FileSpreadsheet,
   Download,
   Check,
+  CheckCircle,
   AlertTriangle,
-  Search
+  Search,
+  DollarSign,
+  Clock,
+  CreditCard,
+  MessageSquare,
+  TrendingUp,
+  TrendingDown
 } from 'lucide-react';
 import {
   Dialog,
@@ -128,14 +135,34 @@ const StudentManagementContent = () => {
     is_priority: false,
     status: 'active'
   });
+  
+  
+  // 이번달 입금자 등록 모달 관련 state
+  const [isCurrentMonthPaymentModalOpen, setIsCurrentMonthPaymentModalOpen] = useState(false);
+  const [allActiveStudents, setAllActiveStudents] = useState([]);
+  const [selectedStudentsForPayment, setSelectedStudentsForPayment] = useState([]);
+  const [bulkPaymentForm, setBulkPaymentForm] = useState({
+    payment_date: '',
+    payment_method: 'cash',
+    notes: ''
+  });
 
   const supabase = createClientComponentClient();
+
+  // 컴포넌트 마운트 시 날짜 초기화 (하이드레이션 오류 방지)
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    setBulkPaymentForm(prev => ({ ...prev, payment_date: today }));
+  }, []);
 
   useEffect(() => {
     if (session?.user?.id && userRole === 'admin') {
       fetchData();
     }
   }, [session?.user?.id, userRole]);
+
+  useEffect(() => {
+  }, [activeTab]);
 
   // URL 파라미터 변경 시 activeTab 업데이트
   useEffect(() => {
@@ -2002,6 +2029,210 @@ const StudentManagementContent = () => {
     );
   };
 
+  // 연체 관리 관련 함수들
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('ko-KR', {
+      style: 'currency',
+      currency: 'KRW'
+    }).format(amount);
+  };
+
+
+
+  // 이번달 입금자 등록 관련 함수들
+  const fetchAllActiveStudents = async () => {
+    try {
+      console.log('🔍 활성 학생 조회 시작');
+      
+      // 디버깅: 테이블 구조 확인
+      console.log('🔍 테이블 구조 확인 중...');
+      
+      // student_enrollments 테이블 샘플 조회
+      const { data: enrollmentsTest, error: enrollmentsError } = await supabase
+        .from('student_enrollments')
+        .select('*')
+        .limit(1);
+      
+      console.log('student_enrollments 테이블 샘플:', enrollmentsTest, enrollmentsError);
+      
+      // schedules 테이블 샘플 조회
+      const { data: schedulesTest, error: schedulesError } = await supabase
+        .from('schedules')
+        .select('*')
+        .limit(1);
+      
+      console.log('schedules 테이블 샘플:', schedulesTest, schedulesError);
+      
+      // students 테이블 샘플 조회
+      const { data: studentsTest, error: studentsError } = await supabase
+        .from('students')
+        .select('*')
+        .limit(1);
+      
+      console.log('students 테이블 샘플:', studentsTest, studentsError);
+      
+      // 1. 활성 학생 등록 정보 조회
+      const { data: enrollments, error } = await supabase
+        .from('student_enrollments')
+        .select(`
+          *,
+          students!inner (id, full_name, email, phone, grade),
+          schedules!inner (id, subject, teacher_name, grade, price)
+        `)
+        .eq('status', 'active');
+
+      if (error) {
+        console.error('❌ 학생 등록 정보 조회 오류:', error);
+        throw error;
+      }
+
+      console.log('✅ 학생 등록 정보 조회 성공:', enrollments?.length || 0, '건');
+
+      // 2. payments 테이블 구조 확인
+      const { data: paymentsTest, error: paymentsTestError } = await supabase
+        .from('payments')
+        .select('*')
+        .limit(1);
+      
+      console.log('payments 테이블 샘플:', paymentsTest, paymentsTestError);
+      
+      // 3. 이번달 이미 결제한 학생들 조회
+      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM 형식
+      console.log('🗓️ 현재 월:', currentMonth);
+      
+      // 먼저 간단한 쿼리로 테스트
+      const { data: simplePayments, error: simplePaymentError } = await supabase
+        .from('payments')
+        .select('*')
+        .limit(5);
+      
+      console.log('payments 테이블 전체 샘플:', simplePayments, simplePaymentError);
+      
+      // 실제 이번달 결제 정보 조회
+      const { data: currentPayments, error: paymentError } = await supabase
+        .from('payments')
+        .select('student_id, schedule_id, payment_date')
+        .gte('payment_date', `${currentMonth}-01`)
+        .lte('payment_date', `${currentMonth}-31`);
+
+      if (paymentError) {
+        console.error('❌ 결제 정보 조회 오류:', {
+          error: paymentError,
+          message: paymentError?.message,
+          details: paymentError?.details,
+          hint: paymentError?.hint,
+          code: paymentError?.code,
+          query: `payment_date >= '${currentMonth}-01' AND payment_date <= '${currentMonth}-31'`
+        });
+        
+        // payments 테이블에 접근할 수 없는 경우 빈 배열로 처리
+        console.log('⚠️ payments 테이블 접근 불가, 모든 학생을 미납부로 간주');
+        setAllActiveStudents(enrollments || []);
+        return;
+      }
+
+      console.log('✅ 이번달 결제 정보 조회 성공:', currentPayments?.length || 0, '건');
+
+      // 3. 결제 완료된 학생들의 키 생성
+      const paidStudentKeys = new Set(
+        (currentPayments || []).map(p => `${p.student_id}-${p.schedule_id}`)
+      );
+
+      console.log('💰 결제 완료된 학생-수업 조합:', paidStudentKeys.size, '개');
+
+      // 4. 아직 결제하지 않은 학생들만 필터링
+      const unpaidStudents = (enrollments || []).filter(enrollment => {
+        const key = `${enrollment.student_id}-${enrollment.schedule_id}`;
+        return !paidStudentKeys.has(key);
+      });
+
+      console.log('⏳ 미납부 학생:', unpaidStudents.length, '명');
+
+      setAllActiveStudents(unpaidStudents);
+      
+    } catch (error) {
+      console.error('❌ 활성 학생 조회 오류:', {
+        error,
+        message: error?.message,
+        details: error?.details,
+        hint: error?.hint,
+        code: error?.code
+      });
+      
+      let errorMessage = '학생 목록을 불러오는 중 오류가 발생했습니다.';
+      
+      if (error?.message) {
+        errorMessage += ` (${error.message})`;
+      }
+      
+      if (error?.code === 'PGRST116') {
+        errorMessage = '테이블 또는 컬럼을 찾을 수 없습니다. 데이터베이스 구조를 확인해주세요.';
+      }
+      
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleStudentSelectForPayment = (student, checked) => {
+    setSelectedStudentsForPayment(prev => {
+      if (checked) {
+        return [...prev, student];
+      } else {
+        return prev.filter(s => `${s.student_id}-${s.schedule_id}` !== `${student.student_id}-${student.schedule_id}`);
+      }
+    });
+  };
+
+  const handleSelectAllForPayment = (checked) => {
+    if (checked) {
+      setSelectedStudentsForPayment(allActiveStudents);
+    } else {
+      setSelectedStudentsForPayment([]);
+    }
+  };
+
+  const handleBulkPaymentSubmit = async () => {
+    if (selectedStudentsForPayment.length === 0) {
+      toast.error('결제할 학생을 선택해주세요.');
+      return;
+    }
+
+    try {
+      // 선택된 학생들의 결제 기록 생성
+      const payments = selectedStudentsForPayment.map(student => ({
+        student_id: student.student_id,
+        schedule_id: student.schedule_id,
+        amount: student.schedules?.price || student.monthly_fee || 0,
+        payment_date: bulkPaymentForm.payment_date,
+        payment_method: bulkPaymentForm.payment_method,
+        payment_period_start: bulkPaymentForm.payment_date,
+        payment_period_end: new Date(new Date(bulkPaymentForm.payment_date).setMonth(new Date(bulkPaymentForm.payment_date).getMonth() + 1)).toISOString().split('T')[0],
+        notes: bulkPaymentForm.notes
+      }));
+
+      const { error } = await supabase
+        .from('payments')
+        .insert(payments);
+
+      if (error) throw error;
+
+      toast.success(`${selectedStudentsForPayment.length}명의 결제 기록이 저장되었습니다.`);
+      setIsCurrentMonthPaymentModalOpen(false);
+      setSelectedStudentsForPayment([]);
+      fetchOverdueData(); // 연체 데이터 새로고침
+    } catch (error) {
+      console.error('일괄 결제 기록 저장 오류:', error);
+      toast.error('결제 기록 저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  const openCurrentMonthPaymentModal = () => {
+    fetchAllActiveStudents();
+    setIsCurrentMonthPaymentModalOpen(true);
+  };
+
+
   const renderPriorityTab = () => {
     return (
       <Card>
@@ -2194,6 +2425,7 @@ const StudentManagementContent = () => {
         <TabsContent value="by-score" className="space-y-4 mt-6">
           {renderScoreTab()}
         </TabsContent>
+
 
         <TabsContent value="priority" className="space-y-4 mt-6">
           {renderPriorityTab()}
@@ -2803,6 +3035,313 @@ const StudentManagementContent = () => {
               disabled={!enrollmentForm.schedule_id || !enrollmentForm.start_date}
             >
               등록
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 결제 기록 추가 모달 */}
+      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>결제 기록 추가</DialogTitle>
+            <DialogDescription>
+              {selectedStudentForPayment && 
+                `${selectedStudentForPayment.student?.full_name}님의 결제 기록을 추가합니다.`
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="payment-amount">결제 금액</Label>
+                <Input
+                  id="payment-amount"
+                  type="number"
+                  value={paymentForm.amount}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
+                  placeholder="결제 금액"
+                />
+              </div>
+              <div>
+                <Label htmlFor="payment-date">결제일</Label>
+                <Input
+                  id="payment-date"
+                  type="date"
+                  value={paymentForm.payment_date}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, payment_date: e.target.value })}
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="payment-method">결제 방법</Label>
+              <Select value={paymentForm.payment_method} onValueChange={(value) => setPaymentForm({ ...paymentForm, payment_method: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="결제 방법 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">현금</SelectItem>
+                  <SelectItem value="card">카드</SelectItem>
+                  <SelectItem value="transfer">계좌이체</SelectItem>
+                  <SelectItem value="other">기타</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="period-start">적용 기간 시작</Label>
+                <Input
+                  id="period-start"
+                  type="date"
+                  value={paymentForm.period_start}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, period_start: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="period-end">적용 기간 종료</Label>
+                <Input
+                  id="period-end"
+                  type="date"
+                  value={paymentForm.period_end}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, period_end: e.target.value })}
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="payment-notes">메모</Label>
+              <Textarea
+                id="payment-notes"
+                value={paymentForm.notes}
+                onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
+                placeholder="결제 관련 메모를 입력하세요..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPaymentModalOpen(false)}>
+              취소
+            </Button>
+            <Button onClick={handlePaymentSubmit}>
+              결제 기록 저장
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 상담 메모 모달 */}
+      <Dialog open={isMemoModalOpen} onOpenChange={setIsMemoModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>상담 기록</DialogTitle>
+            <DialogDescription>
+              {selectedStudentForMemo && 
+                `${selectedStudentForMemo.student?.full_name}님의 상담 기록을 관리합니다.`
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* 기존 상담 기록 */}
+            {consultationHistory.length > 0 && (
+              <div>
+                <Label>기존 상담 기록</Label>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {consultationHistory.map((record, index) => (
+                    <div key={index} className="p-3 bg-gray-50 rounded">
+                      <div className="flex justify-between items-start">
+                        <div className="text-sm text-gray-600">
+                          {new Date(record.date).toLocaleDateString('ko-KR')} - {record.consultant}
+                        </div>
+                        <Badge variant="outline">{record.type}</Badge>
+                      </div>
+                      <p className="mt-1 text-sm">{record.content}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* 새 상담 기록 입력 */}
+            <div>
+              <Label htmlFor="memo-type">상담 유형</Label>
+              <Select value={memoForm.type} onValueChange={(value) => setMemoForm({ ...memoForm, type: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="상담 유형 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="payment_reminder">결제 독촉</SelectItem>
+                  <SelectItem value="phone_call">전화 상담</SelectItem>
+                  <SelectItem value="in_person">방문 상담</SelectItem>
+                  <SelectItem value="payment_plan">분할 계획</SelectItem>
+                  <SelectItem value="other">기타</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="memo-content">상담 내용</Label>
+              <Textarea
+                id="memo-content"
+                value={memoForm.content}
+                onChange={(e) => setMemoForm({ ...memoForm, content: e.target.value })}
+                placeholder="상담 내용을 입력하세요..."
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsMemoModalOpen(false)}>
+              취소
+            </Button>
+            <Button onClick={handleMemoSubmit}>
+              상담 기록 저장
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 이번달 입금자 등록 모달 */}
+      <Dialog open={isCurrentMonthPaymentModalOpen} onOpenChange={setIsCurrentMonthPaymentModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>이번달 입금자 등록</DialogTitle>
+            <DialogDescription>
+              이번달 수업료를 납부한 학생들을 선택해주세요.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* 결제 정보 설정 */}
+            <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div>
+                <Label htmlFor="bulk-payment-date">결제일</Label>
+                <Input
+                  id="bulk-payment-date"
+                  type="date"
+                  value={bulkPaymentForm.payment_date}
+                  onChange={(e) => setBulkPaymentForm({ ...bulkPaymentForm, payment_date: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="bulk-payment-method">결제 방법</Label>
+                <Select
+                  value={bulkPaymentForm.payment_method}
+                  onValueChange={(value) => setBulkPaymentForm({ ...bulkPaymentForm, payment_method: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">현금</SelectItem>
+                    <SelectItem value="card">카드</SelectItem>
+                    <SelectItem value="transfer">계좌이체</SelectItem>
+                    <SelectItem value="other">기타</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="bulk-payment-notes">비고</Label>
+                <Input
+                  id="bulk-payment-notes"
+                  value={bulkPaymentForm.notes}
+                  onChange={(e) => setBulkPaymentForm({ ...bulkPaymentForm, notes: e.target.value })}
+                  placeholder="공통 비고 사항"
+                />
+              </div>
+            </div>
+
+            {/* 학생 선택 */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label className="text-base font-medium">
+                  결제할 학생 선택 ({selectedStudentsForPayment.length}/{allActiveStudents.length}명)
+                </Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="select-all-payments"
+                    checked={selectedStudentsForPayment.length === allActiveStudents.length && allActiveStudents.length > 0}
+                    onChange={(e) => handleSelectAllForPayment(e.target.checked)}
+                    className="w-4 h-4"
+                  />
+                  <Label htmlFor="select-all-payments" className="text-sm">전체 선택</Label>
+                </div>
+              </div>
+              
+              {allActiveStudents.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <CreditCard className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>이번달 결제 대상자가 없습니다.</p>
+                  <p className="text-sm">모든 학생이 이미 결제를 완료했습니다.</p>
+                </div>
+              ) : (
+                <div className="border rounded-lg max-h-60 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-white">
+                      <TableRow>
+                        <TableHead className="w-12">선택</TableHead>
+                        <TableHead>학생명</TableHead>
+                        <TableHead>수업</TableHead>
+                        <TableHead>강사</TableHead>
+                        <TableHead>수업료</TableHead>
+                        <TableHead>연락처</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {allActiveStudents.map((student) => {
+                        const isSelected = selectedStudentsForPayment.some(s => 
+                          `${s.student_id}-${s.schedule_id}` === `${student.student_id}-${student.schedule_id}`
+                        );
+                        return (
+                          <TableRow key={`${student.student_id}-${student.schedule_id}`}>
+                            <TableCell>
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => handleStudentSelectForPayment(student, e.target.checked)}
+                                className="w-4 h-4"
+                              />
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {student.students?.full_name}
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">
+                                  {student.schedules?.grade} {student.schedules?.subject}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {student.schedules?.teacher_name}
+                            </TableCell>
+                            <TableCell>
+                              {formatCurrency(student.schedules?.price || student.monthly_fee || 0)}
+                            </TableCell>
+                            <TableCell>
+                              {student.students?.phone}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCurrentMonthPaymentModalOpen(false)}>
+              취소
+            </Button>
+            <Button 
+              onClick={handleBulkPaymentSubmit}
+              disabled={selectedStudentsForPayment.length === 0}
+            >
+              {selectedStudentsForPayment.length}명 결제 기록 저장
             </Button>
           </DialogFooter>
         </DialogContent>

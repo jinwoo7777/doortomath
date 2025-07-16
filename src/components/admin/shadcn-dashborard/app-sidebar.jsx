@@ -62,7 +62,7 @@ const data = {
   navHome: [
     {
       title: "대시보드",
-      url: "/dashboard2/admin?path=/dashboard2/admin",
+      url: "/dashboard2/admin?path=/dashboard2/admin/dashboard-main",
       icon: Gauge,
     },
   ],
@@ -151,9 +151,11 @@ const data = {
       url: "/dashboard2/admin?path=/dashboard2/admin/sales-management",
       icon: ChartColumnBig,
       items: [
-        { title: "매출 대시보드", url: "/dashboard2/admin?path=/dashboard2/admin/sales-management" },
-        { title: "수업별 매출", url: "/dashboard2/admin?path=/dashboard2/admin/sales-by-class" },
-        { title: "강사별 매출", url: "/dashboard2/admin?path=/dashboard2/admin/sales-by-instructor" },
+        { title: "매출 현황", url: "/dashboard2/admin?path=/dashboard2/admin/sales-management&tab=overview" },
+        { title: "연체 관리", url: "/dashboard2/admin?path=/dashboard2/admin/sales-management&tab=overdue" },
+        { title: "입금자 목록", url: "/dashboard2/admin?path=/dashboard2/admin/sales-management&tab=paid" },
+        { title: "수업별 매출", url: "/dashboard2/admin?path=/dashboard2/admin/sales-management&tab=by-class" },
+        { title: "강사별 매출", url: "/dashboard2/admin?path=/dashboard2/admin/sales-management&tab=by-instructor" },
       ],
     },
     {

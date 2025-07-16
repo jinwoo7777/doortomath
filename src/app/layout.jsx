@@ -14,7 +14,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className="td_theme_2" suppressHydrationWarning={true}>
-      <body>
+      <body suppressHydrationWarning={true}>
         <ProviderComponent>{children}</ProviderComponent>
       </body>
     </html>
