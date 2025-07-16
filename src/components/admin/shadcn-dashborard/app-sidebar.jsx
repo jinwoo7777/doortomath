@@ -25,7 +25,6 @@ import {
 
 import { NavHome } from "@/components/admin/shadcn-dashborard/nav-home"
 import { NavMain } from "@/components/admin/shadcn-dashborard/nav-main"
-import { NavProjects } from "@/components/admin/shadcn-dashborard/nav-projects"
 import { NavUser } from "@/components/admin/shadcn-dashborard/nav-user"
 import { TeamSwitcher } from "@/components/admin/shadcn-dashborard/team-switcher"
 import {
@@ -147,20 +146,18 @@ const data = {
         { title: "엑셀 업로드", url: "/dashboard2/admin/grading-management?tab=excel" },
       ],
     },
-  ],
-  projects: [
     {
-      name: "시험문제 관리",
-      url: "/dashboard2/admin?path=/dashboard2/admin/exam-management",
-      icon: BookOpen,
-    },
-    {
-      name: "매출 관리",
+      title: "매출 관리",
       url: "/dashboard2/admin?path=/dashboard2/admin/sales-management",
       icon: ChartColumnBig,
+      items: [
+        { title: "매출 대시보드", url: "/dashboard2/admin?path=/dashboard2/admin/sales-management" },
+        { title: "수업별 매출", url: "/dashboard2/admin?path=/dashboard2/admin/sales-by-class" },
+        { title: "강사별 매출", url: "/dashboard2/admin?path=/dashboard2/admin/sales-by-instructor" },
+      ],
     },
     {
-      name: "문의 관리",
+      title: "문의 관리",
       url: "/dashboard2/admin?path=/dashboard2/admin/inquiry-management",
       icon: MailQuestionMark,
     },
@@ -176,7 +173,6 @@ export function AppSidebar(props) {
       <SidebarContent>
         <NavHome items={data.navHome} />
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

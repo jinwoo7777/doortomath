@@ -72,7 +72,7 @@ export const HeaderThree = () => {
                   회원가입
                 </Link>
               </span>
-              <Link href="#" className="td_btn td_style_1 td_medium">
+              <Link href="/consultation-request" className="td_btn td_style_1 td_medium">
                 <span className="td_btn_in td_white_color td_accent_bg">
                   <span>상담신청</span>
                   <svg

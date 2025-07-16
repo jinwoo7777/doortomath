@@ -6,6 +6,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import * as XLSX from 'xlsx';
+import { getDayName } from '@/lib/supabase/fetchSchedules';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -101,6 +102,16 @@ const StudentManagementContent = () => {
   const [selectedStudentForCourses, setSelectedStudentForCourses] = useState(null);
   const [selectedStudentForScores, setSelectedStudentForScores] = useState(null);
   const [isExamScoresModalOpen, setIsExamScoresModalOpen] = useState(false);
+  
+  // 수업 등록 모달 관련 state
+  const [isEnrollmentModalOpen, setIsEnrollmentModalOpen] = useState(false);
+  const [selectedStudentForEnrollment, setSelectedStudentForEnrollment] = useState(null);
+  const [enrollmentForm, setEnrollmentForm] = useState({
+    schedule_id: '',
+    start_date: '',
+    monthly_fee: '',
+    notes: ''
+  });
   
   const [studentForm, setStudentForm] = useState({
     full_name: '',
@@ -496,6 +507,90 @@ const StudentManagementContent = () => {
       } else {
         toast.error(`학원생 저장에 실패했습니다: ${error.message}`);
       }
+    }
+  };
+
+  // 수업 등록 관련 함수들
+  const openEnrollmentModal = (student) => {
+    setSelectedStudentForEnrollment(student);
+    setEnrollmentForm({
+      schedule_id: '',
+      start_date: new Date().toISOString().split('T')[0],
+      monthly_fee: '',
+      notes: ''
+    });
+    setIsEnrollmentModalOpen(true);
+  };
+
+  const handleEnrollmentFormChange = (e) => {
+    const { name, value } = e.target;
+    setEnrollmentForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleScheduleSelect = (scheduleId) => {
+    const selectedSchedule = schedules.find(s => s.id === scheduleId);
+    setEnrollmentForm(prev => ({
+      ...prev,
+      schedule_id: scheduleId,
+      monthly_fee: selectedSchedule?.price || ''
+    }));
+  };
+
+  const handleEnrollStudent = async () => {
+    if (!enrollmentForm.schedule_id || !enrollmentForm.start_date) {
+      toast.error('수업과 시작일을 선택해주세요.');
+      return;
+    }
+
+    try {
+      // 이미 등록된 수업인지 확인
+      const { data: existingEnrollment } = await supabase
+        .from('student_enrollments')
+        .select('*')
+        .eq('student_id', selectedStudentForEnrollment.id)
+        .eq('schedule_id', enrollmentForm.schedule_id)
+        .eq('status', 'active')
+        .single();
+
+      if (existingEnrollment) {
+        toast.error('이미 해당 수업에 등록된 학생입니다.');
+        return;
+      }
+
+      // 수강생 등록
+      const { error } = await supabase
+        .from('student_enrollments')
+        .insert([{
+          student_id: selectedStudentForEnrollment.id,
+          schedule_id: enrollmentForm.schedule_id,
+          start_date: enrollmentForm.start_date,
+          monthly_fee: parseFloat(enrollmentForm.monthly_fee) || 0,
+          notes: enrollmentForm.notes,
+          status: 'active',
+          payment_status: 'pending'
+        }]);
+
+      if (error) throw error;
+
+      // 해당 수업의 current_students 증가
+      const selectedSchedule = schedules.find(s => s.id === enrollmentForm.schedule_id);
+      await supabase
+        .from('schedules')
+        .update({ 
+          current_students: (selectedSchedule.current_students || 0) + 1 
+        })
+        .eq('id', enrollmentForm.schedule_id);
+
+      toast.success('수업 등록이 완료되었습니다.');
+      setIsEnrollmentModalOpen(false);
+      fetchStudentSchedules(); // 수강 정보 새로고침
+      fetchSchedules(); // 스케줄 정보 새로고침
+    } catch (error) {
+      console.error('Error enrolling student:', error);
+      toast.error('수업 등록 중 오류가 발생했습니다.');
     }
   };
 
@@ -1500,6 +1595,14 @@ const StudentManagementContent = () => {
                                   title="성적 확인"
                                 >
                                   <BarChart3 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openEnrollmentModal(student)}
+                                  title="수업 등록"
+                                >
+                                  <Plus className="h-4 w-4" />
                                 </Button>
                               </div>
                             </TableCell>
@@ -2616,6 +2719,94 @@ const StudentManagementContent = () => {
         onClose={closeExamScoresModal}
         student={selectedStudentForScores}
       />
+
+      {/* 수업 등록 모달 */}
+      <Dialog open={isEnrollmentModalOpen} onOpenChange={setIsEnrollmentModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>수업 등록</DialogTitle>
+            <DialogDescription>
+              {selectedStudentForEnrollment?.full_name} 학생을 수업에 등록합니다.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="schedule_select">수업 선택 *</Label>
+              <Select 
+                value={enrollmentForm.schedule_id} 
+                onValueChange={handleScheduleSelect}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="수업을 선택해주세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {schedules
+                    .filter(schedule => schedule.is_active && 
+                      (schedule.current_students || 0) < (schedule.max_students || 30))
+                    .map((schedule) => (
+                    <SelectItem key={schedule.id} value={schedule.id}>
+                      {schedule.grade} - {schedule.subject} 
+                      ({getDayName(schedule.day_of_week)} {schedule.time_slot})
+                      {schedule.teacher_name && ` - ${schedule.teacher_name}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="start_date">수업 시작일 *</Label>
+              <Input
+                id="start_date"
+                name="start_date"
+                type="date"
+                value={enrollmentForm.start_date}
+                onChange={handleEnrollmentFormChange}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="monthly_fee">월 수업료 (원)</Label>
+              <Input
+                id="monthly_fee"
+                name="monthly_fee"
+                type="number"
+                value={enrollmentForm.monthly_fee}
+                onChange={handleEnrollmentFormChange}
+                placeholder="월 수업료를 입력해주세요"
+                min="0"
+                step="1000"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">비고</Label>
+              <Textarea
+                id="notes"
+                name="notes"
+                value={enrollmentForm.notes}
+                onChange={handleEnrollmentFormChange}
+                placeholder="특이사항이나 메모를 입력해주세요"
+                rows={3}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEnrollmentModalOpen(false)}>
+              취소
+            </Button>
+            <Button 
+              onClick={handleEnrollStudent}
+              disabled={!enrollmentForm.schedule_id || !enrollmentForm.start_date}
+            >
+              등록
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -19,6 +19,10 @@ import TeamDescriptionPage from './main-designedit/team-description/page';
 import ClassDescriptionPage from './class-description/page';
 import BlogEditorPage from './blog-editor/page';
 import ScheduleManagementContent from '@/components/admin/dashboard/schedule-management/ScheduleManagementContent';
+import InquiryManagementContent from '@/components/admin/dashboard/inquiry-management/InquiryManagementContent';
+import SalesManagementContent from '@/components/admin/dashboard/sales-management/SalesManagementContent';
+import SalesByClassContent from '@/components/admin/dashboard/sales-management/SalesByClassContent';
+import SalesByInstructorContent from '@/components/admin/dashboard/sales-management/SalesByInstructorContent';
 
 import {
   Breadcrumb,
@@ -308,6 +312,51 @@ export default function Page() {
                     );
                   }
                   
+                  if (currentPage.includes('/dashboard2/admin/sales-management')) {
+                    return (
+                      <>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                          <BreadcrumbPage>매출 관리</BreadcrumbPage>
+                        </BreadcrumbItem>
+                      </>
+                    );
+                  }
+                  
+                  if (currentPage.includes('/dashboard2/admin/sales-by-class')) {
+                    return (
+                      <>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                          <BreadcrumbLink href="/dashboard2/admin?path=/dashboard2/admin/sales-management">
+                            매출 관리
+                          </BreadcrumbLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                          <BreadcrumbPage>수업별 매출</BreadcrumbPage>
+                        </BreadcrumbItem>
+                      </>
+                    );
+                  }
+                  
+                  if (currentPage.includes('/dashboard2/admin/sales-by-instructor')) {
+                    return (
+                      <>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                          <BreadcrumbLink href="/dashboard2/admin?path=/dashboard2/admin/sales-management">
+                            매출 관리
+                          </BreadcrumbLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                          <BreadcrumbPage>강사별 매출</BreadcrumbPage>
+                        </BreadcrumbItem>
+                      </>
+                    );
+                  }
+                  
                   return null;
                 })()}
               </BreadcrumbList>
@@ -400,6 +449,18 @@ export default function Page() {
           )}
           {currentPage === '/dashboard2/admin/schedule-management' && (
             <ScheduleManagementContent />
+          )}
+          {currentPage === '/dashboard2/admin/inquiry-management' && (
+            <InquiryManagementContent />
+          )}
+          {currentPage === '/dashboard2/admin/sales-management' && (
+            <SalesManagementContent />
+          )}
+          {currentPage === '/dashboard2/admin/sales-by-class' && (
+            <SalesByClassContent />
+          )}
+          {currentPage === '/dashboard2/admin/sales-by-instructor' && (
+            <SalesByInstructorContent />
           )}
 
           {/* 다른 페이지들도 여기에 추가 */}

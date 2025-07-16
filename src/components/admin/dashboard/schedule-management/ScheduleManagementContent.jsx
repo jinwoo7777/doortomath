@@ -74,7 +74,9 @@ const ScheduleManagementContent = () => {
     description: '',
     max_students: 30,
     current_students: 0,
-    is_active: true
+    is_active: true,
+    price: 0,
+    price_period: 'monthly'
   });
 
   const supabase = createClientComponentClient();
@@ -180,7 +182,9 @@ const ScheduleManagementContent = () => {
           description: scheduleForm.description.trim() || null,
           max_students: parseInt(scheduleForm.max_students) || 30,
           current_students: parseInt(scheduleForm.current_students) || 0,
-          is_active: scheduleForm.is_active
+          is_active: scheduleForm.is_active,
+          price: parseFloat(scheduleForm.price) || 0,
+          price_period: scheduleForm.price_period
         });
 
         setSchedules(prev => ({
@@ -203,7 +207,9 @@ const ScheduleManagementContent = () => {
           description: scheduleForm.description.trim() || null,
           max_students: parseInt(scheduleForm.max_students) || 30,
           current_students: parseInt(scheduleForm.current_students) || 0,
-          is_active: scheduleForm.is_active
+          is_active: scheduleForm.is_active,
+          price: parseFloat(scheduleForm.price) || 0,
+          price_period: scheduleForm.price_period
         });
 
         setSchedules(prev => ({
@@ -239,7 +245,9 @@ const ScheduleManagementContent = () => {
       description: '',
       max_students: 30,
       current_students: 0,
-      is_active: true
+      is_active: true,
+      price: 0,
+      price_period: 'monthly'
     });
     setCurrentSchedule(null);
   };
@@ -300,7 +308,9 @@ const ScheduleManagementContent = () => {
       description: schedule.description || '',
       max_students: schedule.max_students || 30,
       current_students: schedule.current_students || 0,
-      is_active: schedule.is_active !== false
+      is_active: schedule.is_active !== false,
+      price: schedule.price || 0,
+      price_period: schedule.price_period || 'monthly'
     });
     setIsDialogOpen(true);
   };
@@ -342,6 +352,7 @@ const ScheduleManagementContent = () => {
             <TableHead>강사</TableHead>
             <TableHead>강의실</TableHead>
             <TableHead>수강인원</TableHead>
+            <TableHead>수업료</TableHead>
             <TableHead>상태</TableHead>
             <TableHead>관리</TableHead>
           </TableRow>
@@ -395,6 +406,21 @@ const ScheduleManagementContent = () => {
                     {schedule.current_students || 0}/{schedule.max_students || 30}
                   </span>
                 </div>
+              </TableCell>
+              <TableCell>
+                {schedule.price > 0 ? (
+                  <div className="text-sm">
+                    <div className="font-medium">
+                      {schedule.price.toLocaleString()}원
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {schedule.price_period === 'monthly' ? '월' : 
+                       schedule.price_period === 'weekly' ? '주' : '회'} 단위
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground text-sm">미설정</span>
+                )}
               </TableCell>
               <TableCell>
                 <Badge variant={schedule.is_active ? "default" : "secondary"}>
@@ -755,6 +781,39 @@ const ScheduleManagementContent = () => {
                 className="col-span-1"
                 min="0"
               />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="price" className="text-right">
+                수업료
+              </Label>
+              <Input
+                id="price"
+                name="price"
+                type="number"
+                value={scheduleForm.price}
+                onChange={handleInputChange}
+                className="col-span-1"
+                min="0"
+                step="1000"
+                placeholder="0"
+              />
+              <Label htmlFor="price_period" className="text-right">
+                결제 주기
+              </Label>
+              <Select
+                value={scheduleForm.price_period}
+                onValueChange={(value) => setScheduleForm(prev => ({ ...prev, price_period: value }))}
+              >
+                <SelectTrigger className="col-span-1">
+                  <SelectValue placeholder="주기 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">월 단위</SelectItem>
+                  <SelectItem value="weekly">주 단위</SelectItem>
+                  <SelectItem value="per_class">회당</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="grid grid-cols-4 items-start gap-4">
