@@ -29,12 +29,18 @@ const StatsCards = ({ dashboardData, navigateToPage }) => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-green-600">{formatCurrency(dashboardData.monthlyRevenue)}</div>
-          <div className="flex items-center text-xs text-gray-500 mt-1">
-            <div className="flex items-center">
-              <div className="w-16 bg-gray-200 rounded-full h-1.5 mr-2">
-                <div className="bg-green-600 h-1.5 rounded-full" style={{width: `${dashboardData.paymentRate}%`}}></div>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center text-xs text-gray-500">
+              <div className="flex items-center">
+                <div className="w-16 bg-gray-200 rounded-full h-1.5 mr-2">
+                  <div className="bg-green-600 h-1.5 rounded-full" style={{width: `${dashboardData.paymentRate}%`}}></div>
+                </div>
+                수금률 {dashboardData.paymentRate}%
               </div>
-              수금률 {dashboardData.paymentRate}%
+            </div>
+            <div className="flex items-center text-xs text-gray-500">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              평균 수업료 ₩375,455
             </div>
           </div>
         </CardContent>

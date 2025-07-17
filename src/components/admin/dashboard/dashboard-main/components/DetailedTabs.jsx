@@ -30,7 +30,11 @@ const DetailedTabs = ({ dashboardData, navigateToPage }) => {
           </TabsContent>
           
           <TabsContent value="students">
-            <StudentsTab recentStudents={dashboardData.recentStudents} navigateToPage={navigateToPage} />
+            <StudentsTab 
+              recentStudents={dashboardData.recentStudents} 
+              dashboardData={dashboardData}
+              navigateToPage={navigateToPage} 
+            />
           </TabsContent>
           
           <TabsContent value="revenue">

@@ -1,13 +1,13 @@
 // src/components/admin/dashboard/schedule-management/ScheduleManagementContent.jsx
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus } from 'lucide-react';
+import { Plus, ExternalLink } from 'lucide-react';
 
 import { useScheduleManagement } from './hooks/useScheduleManagement';
 import { useTeachers } from './hooks/useTeachers';
@@ -16,6 +16,8 @@ import ScheduleStats from './components/ScheduleStats';
 import ScheduleTable from './components/ScheduleTable';
 import ScheduleForm from './components/ScheduleForm';
 import GradeSection from './components/GradeSection';
+import SchedulePageView from './components/SchedulePageView';
+import BranchScheduleView from './components/BranchScheduleView';
 
 const ScheduleManagementContent = ({ branch = 'daechi' }) => {
   const {
@@ -39,6 +41,7 @@ const ScheduleManagementContent = ({ branch = 'daechi' }) => {
   const { teachers } = useTeachers();
   const searchParams = useSearchParams();
   const selectedGrade = searchParams.get('grade');
+  // 뷰 모드 상태 제거
 
   // URL 파라미터 변경 시 activeTab 업데이트
   useEffect(() => {
@@ -59,7 +62,7 @@ const ScheduleManagementContent = ({ branch = 'daechi' }) => {
 
         {['초등부', '중등부', '고등부'].map((grade) => {
           const gradeStats = getStats(schedules[grade]);
-          
+
           return (
             <TabsContent key={grade} value={grade} className="space-y-4">
               {/* 통계 카드 */}
@@ -70,8 +73,8 @@ const ScheduleManagementContent = ({ branch = 'daechi' }) => {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>{grade} 시간표</CardTitle>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => openAddDialog(grade)}
                       className="flex items-center gap-2"
                     >
@@ -103,7 +106,7 @@ const ScheduleManagementContent = ({ branch = 'daechi' }) => {
       <div className="space-y-8">
         {['초등부', '중등부', '고등부'].map((grade) => {
           const gradeStats = getStats(schedules[grade]);
-          
+
           return (
             <GradeSection
               key={grade}
@@ -123,22 +126,54 @@ const ScheduleManagementContent = ({ branch = 'daechi' }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold">
             {selectedGrade ? `${getBranchName(branch)} ${selectedGrade} 시간표 관리` : `${getBranchName(branch)} 수업시간표 관리`}
           </h2>
           <p className="text-muted-foreground">
-            {selectedGrade 
+            {selectedGrade
               ? `${getBranchName(branch)} 지점 ${selectedGrade} 수업시간표를 생성, 편집, 관리합니다.`
               : `${getBranchName(branch)} 지점의 학년별 수업시간표를 생성, 편집, 관리합니다.`
             }
           </p>
         </div>
-        <Button onClick={() => openAddDialog()} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          새 시간표 추가
-        </Button>
+        <div className="flex items-center gap-2">
+          {branch === 'daechi' && (
+            <Button 
+              variant="outline" 
+              onClick={() => window.open('/schedules/elementary', '_blank')}
+              className="flex items-center gap-2"
+            >
+              <ExternalLink className="h-4 w-4" />
+              <span className="hidden sm:inline">시간표 페이지 새창보기</span>
+            </Button>
+          )}
+          {branch === 'bukwirye' && (
+            <Button 
+              variant="outline" 
+              onClick={() => window.open('/schedules/north-wirye', '_blank')}
+              className="flex items-center gap-2"
+            >
+              <ExternalLink className="h-4 w-4" />
+              <span className="hidden sm:inline">시간표 페이지 새창보기</span>
+            </Button>
+          )}
+          {branch === 'namwirye' && (
+            <Button 
+              variant="outline" 
+              onClick={() => window.open('/schedules/south-wirye', '_blank')}
+              className="flex items-center gap-2"
+            >
+              <ExternalLink className="h-4 w-4" />
+              <span className="hidden sm:inline">시간표 페이지 새창보기</span>
+            </Button>
+          )}
+          <Button onClick={() => openAddDialog()} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">새 시간표 추가</span>
+          </Button>
+        </div>
       </div>
 
       {loading ? (

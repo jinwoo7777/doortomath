@@ -28,7 +28,8 @@ const DashboardMainContent = () => {
     recentInquiries: [],
     monthlyTrend: 0,
     attendanceRate: 0,
-    paymentRate: 0
+    paymentRate: 0,
+    averageTuition: 0
   });
 
   useEffect(() => {
@@ -41,6 +42,8 @@ const DashboardMainContent = () => {
     try {
       setLoading(true);
       const data = await fetchDashboardData();
+      console.log('대시보드 데이터 로드 완료:', data);
+      console.log('평균 수업료:', data.averageTuition);
       setDashboardData(data);
     } catch (error) {
       console.error('대시보드 데이터 로딩 오류:', error);

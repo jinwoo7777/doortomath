@@ -20,7 +20,7 @@ import {
   MailQuestionMark,
   Star,
   Users,
-  DraftingCompass, 
+  DraftingCompass,
 } from "lucide-react"
 
 import { NavHome } from "@/components/admin/shadcn-dashborard/nav-home"
@@ -113,7 +113,7 @@ const data = {
         { title: "초등부", url: "/dashboard2/admin/schedule-management?grade=초등부" },
         { title: "중등부", url: "/dashboard2/admin/schedule-management?grade=중등부" },
         { title: "고등부", url: "/dashboard2/admin/schedule-management?grade=고등부" },
-      ],
+      ]
     },
     {
       title: "북위례 수업시간표 관리",

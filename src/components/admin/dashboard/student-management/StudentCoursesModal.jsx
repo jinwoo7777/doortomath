@@ -86,7 +86,7 @@ const StudentCoursesModal = ({
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('student_schedules')
+        .from('student_enrollments')
         .select(`
           *,
           schedules (
@@ -103,7 +103,8 @@ const StudentCoursesModal = ({
             branch
           )
         `)
-        .eq('student_id', student.id);
+        .eq('student_id', student.id)
+        .eq('status', 'active');
 
       if (error) throw error;
       setStudentCourses(data || []);
@@ -117,16 +118,17 @@ const StudentCoursesModal = ({
 
   const fetchAvailableSchedules = async (branch = null) => {
     try {
+      // 비활성화된 수업도 포함하여 모든 수업을 가져옵니다
       let query = supabase
         .from('schedules')
-        .select('*')
-        .eq('is_active', true);
+        .select('*');
       
       if (branch) {
         query = query.eq('branch', branch);
       }
       
       const { data, error } = await query
+        .order('is_active', { ascending: false }) // 활성화된 수업을 먼저 표시
         .order('grade', { ascending: true })
         .order('day_of_week', { ascending: true })
         .order('time_slot', { ascending: true });
@@ -181,12 +183,15 @@ const StudentCoursesModal = ({
       }
 
       const { error } = await supabase
-        .from('student_schedules')
+        .from('student_enrollments')
         .insert({
           student_id: student.id,
           schedule_id: selectedSchedule,
-          enrollment_date: new Date().toISOString(),
+          start_date: new Date().toISOString().split('T')[0],
+          enrollment_date: new Date().toISOString().split('T')[0],
           status: 'active',
+          payment_status: 'pending',
+          monthly_fee: 350000, // 기본 수강료 설정
           notes: enrollmentNotes || null
         });
 
@@ -221,7 +226,7 @@ const StudentCoursesModal = ({
       setLoading(true);
       
       const { error } = await supabase
-        .from('student_schedules')
+        .from('student_enrollments')
         .delete()
         .eq('id', courseId);
 
@@ -252,7 +257,7 @@ const StudentCoursesModal = ({
       setLoading(true);
       
       const { error } = await supabase
-        .from('student_schedules')
+        .from('student_enrollments')
         .update({ status: newStatus })
         .eq('id', courseId);
 
@@ -274,7 +279,7 @@ const StudentCoursesModal = ({
       setLoading(true);
       
       const { error } = await supabase
-        .from('student_schedules')
+        .from('student_enrollments')
         .update({ notes: notes })
         .eq('id', courseId);
 

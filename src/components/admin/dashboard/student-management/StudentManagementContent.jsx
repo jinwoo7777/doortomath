@@ -14,12 +14,12 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Plus, 
-  Edit2, 
-  X, 
-  Eye, 
-  Users, 
+import {
+  Plus,
+  Edit2,
+  X,
+  Eye,
+  Users,
   GraduationCap,
   BookOpen,
   Star,
@@ -59,7 +59,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import StudentExamScoresModal from './StudentExamScoresModal';
 import { Switch } from "@/components/ui/switch";
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -67,7 +67,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -93,7 +93,7 @@ const StudentManagementContent = () => {
   const [selectedTeacherBranch, setSelectedTeacherBranch] = useState('all');
   const [selectedGrade, setSelectedGrade] = useState('all');
   const [selectedBranch, setSelectedBranch] = useState('all');
-  
+
   // 강사 지점 선택 변경 시 강사 선택 초기화
   useEffect(() => {
     setSelectedTeacher('all');
@@ -103,7 +103,7 @@ const StudentManagementContent = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentStudent, setCurrentStudent] = useState(null);
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'all');
-  
+
   // 엑셀 업로드 관련 state
   const [isExcelDialogOpen, setIsExcelDialogOpen] = useState(false);
   const [excelFile, setExcelFile] = useState(null);
@@ -111,13 +111,13 @@ const StudentManagementContent = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadResults, setUploadResults] = useState(null);
-  
+
   // 수강 강의 모달 관련 state
   const [isCoursesModalOpen, setIsCoursesModalOpen] = useState(false);
   const [selectedStudentForCourses, setSelectedStudentForCourses] = useState(null);
   const [selectedStudentForScores, setSelectedStudentForScores] = useState(null);
   const [isExamScoresModalOpen, setIsExamScoresModalOpen] = useState(false);
-  
+
   // 수업 등록 모달 관련 state
   const [isEnrollmentModalOpen, setIsEnrollmentModalOpen] = useState(false);
   const [selectedStudentForEnrollment, setSelectedStudentForEnrollment] = useState(null);
@@ -127,7 +127,7 @@ const StudentManagementContent = () => {
     monthly_fee: '',
     notes: ''
   });
-  
+
   const [studentForm, setStudentForm] = useState({
     full_name: '',
     email: '',
@@ -142,8 +142,8 @@ const StudentManagementContent = () => {
     status: 'active',
     branch: 'daechi'
   });
-  
-  
+
+
   // 이번달 입금자 등록 모달 관련 state
   const [isCurrentMonthPaymentModalOpen, setIsCurrentMonthPaymentModalOpen] = useState(false);
   const [allActiveStudents, setAllActiveStudents] = useState([]);
@@ -180,7 +180,7 @@ const StudentManagementContent = () => {
   const supabase = createClientComponentClient();
 
   const getBranchName = (branch) => {
-    switch(branch) {
+    switch (branch) {
       case 'bukwirye': return '북위례';
       case 'namwirye': return '남위례';
       case 'daechi': return '대치';
@@ -233,10 +233,10 @@ const StudentManagementContent = () => {
   const fetchStudents = async () => {
     try {
       console.log('🔄 학원생 목록 로드 시작');
-      console.log('🔐 세션 인증 확인:', { 
-        hasSession: !!session, 
+      console.log('🔐 세션 인증 확인:', {
+        hasSession: !!session,
         userId: session?.user?.id,
-        userRole 
+        userRole
       });
 
       // 세션이 없으면 에러
@@ -246,7 +246,7 @@ const StudentManagementContent = () => {
 
       // 현재 Supabase 세션 상태 확인
       const { data: currentSession } = await supabase.auth.getSession();
-      console.log('🔍 현재 Supabase 세션:', { 
+      console.log('🔍 현재 Supabase 세션:', {
         hasCurrentSession: !!currentSession?.session,
         userId: currentSession?.session?.user?.id,
         accessToken: currentSession?.session?.access_token ? '존재함' : '없음'
@@ -259,7 +259,7 @@ const StudentManagementContent = () => {
           access_token: session.access_token,
           refresh_token: session.refresh_token
         });
-        
+
         if (sessionError) {
           console.error('❌ 세션 설정 실패:', sessionError);
         } else {
@@ -273,12 +273,12 @@ const StudentManagementContent = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       console.log('✅ 학원생 목록 로드 성공:', data?.length || 0);
       setStudents(data || []);
     } catch (error) {
       console.error('❌ 학원생 목록 불러오기 오류:', error);
-      
+
       if (error.message?.includes('RLS') || error.message?.includes('policy') || error.code === '42501') {
         toast.error('권한이 없습니다. 관리자로 로그인했는지 확인해주세요.');
       } else if (error.code === 'PGRST116') {
@@ -292,9 +292,9 @@ const StudentManagementContent = () => {
   const fetchSchedules = async () => {
     try {
       console.log('🔄 시간표 데이터 로드 시작');
-      console.log('🔐 세션 인증 확인:', { 
-        hasSession: !!session, 
-        userId: session?.user?.id 
+      console.log('🔐 세션 인증 확인:', {
+        hasSession: !!session,
+        userId: session?.user?.id
       });
 
       // 세션이 없으면 에러
@@ -309,12 +309,12 @@ const StudentManagementContent = () => {
         .order('grade', { ascending: true });
 
       if (error) throw error;
-      
+
       console.log('✅ 시간표 데이터 로드 성공:', data?.length || 0);
       setSchedules(data || []);
     } catch (error) {
       console.error('❌ 시간표 데이터 불러오기 오류:', error);
-      
+
       if (error.message?.includes('RLS') || error.message?.includes('policy') || error.code === '42501') {
         toast.error('권한이 없습니다. 관리자로 로그인했는지 확인해주세요.');
       } else {
@@ -326,9 +326,9 @@ const StudentManagementContent = () => {
   const fetchTeachers = async () => {
     try {
       console.log('🔄 강사 목록 로드 시작');
-      console.log('🔐 세션 인증 확인:', { 
-        hasSession: !!session, 
-        userId: session?.user?.id 
+      console.log('🔐 세션 인증 확인:', {
+        hasSession: !!session,
+        userId: session?.user?.id
       });
 
       // 세션이 없으면 에러
@@ -338,7 +338,7 @@ const StudentManagementContent = () => {
 
       // 현재 Supabase 세션 상태 확인
       const { data: currentSession } = await supabase.auth.getSession();
-      console.log('🔍 현재 Supabase 세션 (강사):', { 
+      console.log('🔍 현재 Supabase 세션 (강사):', {
         hasCurrentSession: !!currentSession?.session,
         userId: currentSession?.session?.user?.id
       });
@@ -359,12 +359,12 @@ const StudentManagementContent = () => {
         .order('name', { ascending: true });
 
       if (error) throw error;
-      
+
       console.log('✅ 강사 목록 로드 성공:', data?.length || 0);
       setTeachers(data || []);
     } catch (error) {
       console.error('❌ 강사 목록 불러오기 오류:', error);
-      
+
       if (error.message?.includes('RLS') || error.message?.includes('policy') || error.code === '42501') {
         toast.error('권한이 없습니다. 관리자로 로그인했는지 확인해주세요.');
       } else {
@@ -376,9 +376,9 @@ const StudentManagementContent = () => {
   const fetchStudentSchedules = async () => {
     try {
       console.log('🔄 학원생 수업 연결 데이터 로드 시작');
-      console.log('🔐 세션 인증 확인:', { 
-        hasSession: !!session, 
-        userId: session?.user?.id 
+      console.log('🔐 세션 인증 확인:', {
+        hasSession: !!session,
+        userId: session?.user?.id
       });
 
       // 세션이 없으면 에러
@@ -388,7 +388,7 @@ const StudentManagementContent = () => {
 
       // 현재 Supabase 세션 상태 확인
       const { data: currentSession } = await supabase.auth.getSession();
-      console.log('🔍 현재 Supabase 세션 (학원생 수업):', { 
+      console.log('🔍 현재 Supabase 세션 (학원생 수업):', {
         hasCurrentSession: !!currentSession?.session,
         userId: currentSession?.session?.user?.id
       });
@@ -402,8 +402,9 @@ const StudentManagementContent = () => {
         });
       }
 
+      // student_enrollments 테이블에서 데이터 가져오기 (student_schedules 대신)
       const { data, error } = await supabase
-        .from('student_schedules')
+        .from('student_enrollments')
         .select(`
           *,
           students:student_id(id, full_name, grade),
@@ -412,12 +413,12 @@ const StudentManagementContent = () => {
         .eq('status', 'active');
 
       if (error) throw error;
-      
+
       console.log('✅ 학원생 수업 연결 데이터 로드 성공:', data?.length || 0);
       setStudentSchedules(data || []);
     } catch (error) {
       console.error('❌ 학원생 수업 연결 데이터 불러오기 오류:', error);
-      
+
       if (error.message?.includes('RLS') || error.message?.includes('policy') || error.code === '42501') {
         toast.error('권한이 없습니다. 관리자로 로그인했는지 확인해주세요.');
       } else {
@@ -429,9 +430,9 @@ const StudentManagementContent = () => {
   const fetchStudentGrades = async () => {
     try {
       console.log('🔄 학원생 성적 데이터 로드 시작');
-      console.log('🔐 세션 인증 확인:', { 
-        hasSession: !!session, 
-        userId: session?.user?.id 
+      console.log('🔐 세션 인증 확인:', {
+        hasSession: !!session,
+        userId: session?.user?.id
       });
 
       // 세션이 없으면 에러
@@ -441,7 +442,7 @@ const StudentManagementContent = () => {
 
       // 현재 Supabase 세션 상태 확인
       const { data: currentSession } = await supabase.auth.getSession();
-      console.log('🔍 현재 Supabase 세션 (성적):', { 
+      console.log('🔍 현재 Supabase 세션 (성적):', {
         hasCurrentSession: !!currentSession?.session,
         userId: currentSession?.session?.user?.id
       });
@@ -465,12 +466,12 @@ const StudentManagementContent = () => {
         .order('exam_date', { ascending: false });
 
       if (error) throw error;
-      
+
       console.log('✅ 학원생 성적 데이터 로드 성공:', data?.length || 0);
       setStudentGrades(data || []);
     } catch (error) {
       console.error('❌ 학원생 성적 데이터 불러오기 오류:', error);
-      
+
       if (error.message?.includes('RLS') || error.message?.includes('policy') || error.code === '42501') {
         toast.error('권한이 없습니다. 관리자로 로그인했는지 확인해주세요.');
       } else {
@@ -502,10 +503,10 @@ const StudentManagementContent = () => {
 
     try {
       console.log('🔄 학원생 데이터 저장 시작:', currentStudent ? '수정' : '추가');
-      console.log('🔐 세션 인증 확인:', { 
-        hasSession: !!session, 
+      console.log('🔐 세션 인증 확인:', {
+        hasSession: !!session,
         userId: session?.user?.id,
-        userRole 
+        userRole
       });
 
       // 세션이 없으면 에러
@@ -539,7 +540,7 @@ const StudentManagementContent = () => {
 
         if (error) throw error;
 
-        setStudents(prev => prev.map(student => 
+        setStudents(prev => prev.map(student =>
           student.id === currentStudent.id ? data : student
         ));
 
@@ -564,7 +565,7 @@ const StudentManagementContent = () => {
       resetForm();
     } catch (error) {
       console.error('❌ 학원생 저장 오류:', error);
-      
+
       if (error.code === '23505') {
         toast.error('이미 등록된 이메일입니다.');
       } else if (error.message?.includes('RLS') || error.message?.includes('policy') || error.code === '42501') {
@@ -644,8 +645,8 @@ const StudentManagementContent = () => {
       const selectedSchedule = schedules.find(s => s.id === enrollmentForm.schedule_id);
       await supabase
         .from('schedules')
-        .update({ 
-          current_students: (selectedSchedule.current_students || 0) + 1 
+        .update({
+          current_students: (selectedSchedule.current_students || 0) + 1
         })
         .eq('id', enrollmentForm.schedule_id);
 
@@ -662,7 +663,7 @@ const StudentManagementContent = () => {
   const handleDeleteStudent = async (student) => {
     // 수강 중인 수업이 있는지 확인
     const enrolledSchedules = studentSchedules.filter(ss => ss.student_id === student.id);
-    
+
     if (enrolledSchedules.length > 0) {
       const confirmMessage = `${student.full_name} 학원생은 현재 ${enrolledSchedules.length}개의 수업을 수강하고 있습니다.\n정말로 삭제하시겠습니까?`;
       if (!confirm(confirmMessage)) return;
@@ -672,10 +673,10 @@ const StudentManagementContent = () => {
 
     try {
       console.log('🔄 학원생 삭제 시작:', student.full_name);
-      console.log('🔐 세션 인증 확인:', { 
-        hasSession: !!session, 
+      console.log('🔐 세션 인증 확인:', {
+        hasSession: !!session,
         userId: session?.user?.id,
-        userRole 
+        userRole
       });
 
       // 세션이 없으면 에러
@@ -695,7 +696,7 @@ const StudentManagementContent = () => {
       toast.success('학원생이 삭제되었습니다.');
     } catch (error) {
       console.error('❌ 학원생 삭제 오류:', error);
-      
+
       if (error.message?.includes('RLS') || error.message?.includes('policy') || error.code === '42501') {
         toast.error('권한이 없습니다. 관리자로 로그인했는지 확인해주세요.');
       } else {
@@ -708,10 +709,10 @@ const StudentManagementContent = () => {
     try {
       const newStatus = !student.is_priority;
       console.log('🔄 학원생 관심관리 상태 변경 시작:', student.full_name, newStatus ? '추가' : '제거');
-      console.log('🔐 세션 인증 확인:', { 
-        hasSession: !!session, 
+      console.log('🔐 세션 인증 확인:', {
+        hasSession: !!session,
         userId: session?.user?.id,
-        userRole 
+        userRole
       });
 
       // 세션이 없으면 에러
@@ -721,7 +722,7 @@ const StudentManagementContent = () => {
 
       const { data, error } = await supabase
         .from('students')
-        .update({ 
+        .update({
           is_priority: newStatus,
           updated_at: new Date().toISOString()
         })
@@ -736,7 +737,7 @@ const StudentManagementContent = () => {
       toast.success(`${student.full_name} 학원생이 관심관리 대상에서 ${newStatus ? '추가' : '제거'}되었습니다.`);
     } catch (error) {
       console.error('❌ 학원생 관심관리 상태 변경 오류:', error);
-      
+
       if (error.message?.includes('RLS') || error.message?.includes('policy') || error.code === '42501') {
         toast.error('권한이 없습니다. 관리자로 로그인했는지 확인해주세요.');
       } else {
@@ -787,7 +788,8 @@ const StudentManagementContent = () => {
   };
 
   const getStudentSchedules = (studentId) => {
-    return studentSchedules.filter(ss => ss.student_id === studentId);
+    // student_enrollments 테이블에서 해당 학생의 활성 등록 정보를 필터링
+    return studentSchedules.filter(ss => ss.student_id === studentId && ss.status === 'active');
   };
 
   const openCoursesModal = (student) => {
@@ -892,7 +894,7 @@ const StudentManagementContent = () => {
       consultant: session?.user?.email || ''
     });
     setIsMemoModalOpen(true);
-    
+
     // 해당 학생의 상담 기록 불러오기
     if (student.student_id || student.id) {
       await fetchConsultationHistory(student.student_id || student.id);
@@ -932,12 +934,12 @@ const StudentManagementContent = () => {
       if (error) throw error;
 
       toast.success('상담 기록이 저장되었습니다.');
-      
+
       // 상담 기록 새로고침
       if (selectedStudentForMemo.student_id || selectedStudentForMemo.id) {
         await fetchConsultationHistory(selectedStudentForMemo.student_id || selectedStudentForMemo.id);
       }
-      
+
       // 폼 리셋
       setMemoForm({
         content: '',
@@ -967,13 +969,13 @@ const StudentManagementContent = () => {
     const totalStudents = students.length;
     const activeStudents = students.filter(s => s.status === 'active').length;
     const priorityStudents = students.filter(s => s.is_priority).length;
-    
+
     const gradeStats = {
       초등부: students.filter(s => s.grade === '초등부').length,
       중등부: students.filter(s => s.grade === '중등부').length,
       고등부: students.filter(s => s.grade === '고등부').length
     };
-    
+
     return {
       totalStudents,
       activeStudents,
@@ -986,7 +988,7 @@ const StudentManagementContent = () => {
 
   const getAvailableSchoolGrades = (grade) => {
     if (!grade) return [];
-    
+
     switch (grade) {
       case '초등부':
         return ['1학년', '2학년', '3학년', '4학년', '5학년', '6학년'];
@@ -1001,11 +1003,11 @@ const StudentManagementContent = () => {
 
   const getStudentsByTeacher = (teacherName) => {
     if (!teacherName || teacherName === 'all') return [];
-    
-    const teacherSchedules = studentSchedules.filter(ss => 
+
+    const teacherSchedules = studentSchedules.filter(ss =>
       ss.schedules?.teacher_name === teacherName && ss.status === 'active'
     );
-    
+
     const studentIds = [...new Set(teacherSchedules.map(ss => ss.student_id))];
     return students.filter(student => studentIds.includes(student.id));
   };
@@ -1017,7 +1019,7 @@ const StudentManagementContent = () => {
   const getStudentGradeAverage = (studentId) => {
     const studentGradeRecords = studentGrades.filter(sg => sg.student_id === studentId);
     if (studentGradeRecords.length === 0) return null;
-    
+
     const totalScore = studentGradeRecords.reduce((sum, record) => sum + parseFloat(record.score), 0);
     return Math.round(totalScore / studentGradeRecords.length);
   };
@@ -1124,18 +1126,18 @@ const StudentManagementContent = () => {
 
   const formatDate = (dateValue) => {
     if (!dateValue) return null;
-    
+
     try {
       // 엑셀에서 날짜가 숫자로 올 수 있음
       if (typeof dateValue === 'number') {
         const date = XLSX.SSF.parse_date_code(dateValue);
         return `${date.y}-${String(date.m).padStart(2, '0')}-${String(date.d).padStart(2, '0')}`;
       }
-      
+
       // 문자열 형태의 날짜
       const date = new Date(dateValue);
       if (isNaN(date.getTime())) return null;
-      
+
       return date.toISOString().split('T')[0];
     } catch (error) {
       console.error('날짜 변환 오류:', error);
@@ -1170,11 +1172,11 @@ const StudentManagementContent = () => {
 
       // 데이터 검증
       const { validData, errors } = validateExcelData(excelData);
-      
+
       if (errors.length > 0) {
         console.warn('⚠️ 데이터 검증 오류:', errors.length, '건');
-        setUploadResults({ 
-          success: false, 
+        setUploadResults({
+          success: false,
           validCount: validData.length,
           errorCount: errors.length,
           errors: errors.slice(0, 10) // 최대 10개 오류만 표시
@@ -1191,7 +1193,7 @@ const StudentManagementContent = () => {
       // 배치 단위로 처리
       for (let i = 0; i < validData.length; i += batchSize) {
         const batch = validData.slice(i, i + batchSize);
-        
+
         try {
           const { data, error } = await supabase
             .from('students')
@@ -1201,21 +1203,21 @@ const StudentManagementContent = () => {
           if (error) {
             console.error('❌ 배치 등록 오류:', error);
             batch.forEach(record => {
-              failedRecords.push({ 
-                data: record, 
-                error: error.message 
+              failedRecords.push({
+                data: record,
+                error: error.message
               });
             });
           } else {
             successCount += data.length;
-            console.log(`✅ 배치 ${Math.floor(i/batchSize) + 1} 등록 성공:`, data.length, '건');
+            console.log(`✅ 배치 ${Math.floor(i / batchSize) + 1} 등록 성공:`, data.length, '건');
           }
         } catch (batchError) {
           console.error('❌ 배치 처리 오류:', batchError);
           batch.forEach(record => {
-            failedRecords.push({ 
-              data: record, 
-              error: batchError.message 
+            failedRecords.push({
+              data: record,
+              error: batchError.message
             });
           });
         }
@@ -1223,7 +1225,7 @@ const StudentManagementContent = () => {
         // 진행률 업데이트
         const progress = Math.min(((i + batchSize) / totalRecords) * 100, 100);
         setUploadProgress(progress);
-        
+
         // UI 업데이트를 위한 짧은 지연
         await new Promise(resolve => setTimeout(resolve, 100));
       }
@@ -1239,7 +1241,7 @@ const StudentManagementContent = () => {
       if (successCount > 0) {
         console.log('✅ 일괄 등록 완료:', successCount, '건 성공');
         toast.success(`${successCount}명의 학원생이 등록되었습니다.`);
-        
+
         // 학원생 목록 새로고침
         await fetchStudents();
       }
@@ -1283,7 +1285,7 @@ const StudentManagementContent = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, '학원생목록');
     XLSX.writeFile(wb, '학원생_등록_템플릿.xlsx');
-    
+
     toast.success('템플릿이 다운로드되었습니다.');
   };
 
@@ -1308,7 +1310,7 @@ const StudentManagementContent = () => {
             <p className="text-xs text-muted-foreground">등록된 모든 학원생</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">재학생</CardTitle>
@@ -1398,9 +1400,9 @@ const StudentManagementContent = () => {
             </div>
 
             {(selectedGrade !== 'all' || selectedBranch !== 'all' || searchQuery) && (
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   setSelectedGrade('all');
                   setSelectedBranch('all');
@@ -1433,7 +1435,7 @@ const StudentManagementContent = () => {
                 filteredStudents = filteredStudents.filter(s => s.branch === selectedBranch);
               }
               if (searchQuery) {
-                filteredStudents = filteredStudents.filter(s => 
+                filteredStudents = filteredStudents.filter(s =>
                   s.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                   s.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                   s.phone?.includes(searchQuery) ||
@@ -1445,8 +1447,8 @@ const StudentManagementContent = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setIsExcelDialogOpen(true)}
             className="flex items-center gap-2"
           >
@@ -1475,14 +1477,14 @@ const StudentManagementContent = () => {
               filteredStudents = filteredStudents.filter(s => s.branch === selectedBranch);
             }
             if (searchQuery) {
-              filteredStudents = filteredStudents.filter(s => 
+              filteredStudents = filteredStudents.filter(s =>
                 s.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 s.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 s.phone?.includes(searchQuery) ||
                 s.parent_phone?.includes(searchQuery)
               );
             }
-            
+
             return filteredStudents.length === 0 ? (
               <div className="text-center py-8">
                 <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -1494,8 +1496,8 @@ const StudentManagementContent = () => {
                 </p>
                 <div className="flex justify-center gap-2">
                   {selectedGrade !== 'all' || selectedBranch !== 'all' || searchQuery ? (
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => {
                         setSelectedGrade('all');
                         setSelectedBranch('all');
@@ -1538,7 +1540,7 @@ const StudentManagementContent = () => {
                     {filteredStudents.map((student) => {
                       const enrolledSchedules = getStudentSchedules(student.id);
                       return (
-                        <TableRow 
+                        <TableRow
                           key={student.id}
                           className={student.status !== 'active' ? 'opacity-60' : ''}
                         >
@@ -1581,7 +1583,7 @@ const StudentManagementContent = () => {
                               </Badge>
                             )}
                           </TableCell>
-                             <TableCell>
+                          <TableCell>
                             {student.school && (
                               <div className="flex items-center gap-1">
                                 <School className="h-3 w-3 text-muted-foreground" />
@@ -1613,14 +1615,18 @@ const StudentManagementContent = () => {
                               className="flex items-center gap-1 h-auto p-1"
                             >
                               <BookOpen className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-sm">{enrolledSchedules.length}개</span>
+                              {enrolledSchedules.length > 0 ? (
+                                <span className="text-sm">{enrolledSchedules.length}개</span>
+                              ) : (
+                                <span className="text-sm text-red-500">미등록</span>
+                              )}
                             </Button>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <Badge variant={student.status === 'active' ? "default" : "secondary"}>
-                                {student.status === 'active' ? '재학' : 
-                                 student.status === 'inactive' ? '휴학' : '퇴학'}
+                                {student.status === 'active' ? '재학' :
+                                  student.status === 'inactive' ? '휴학' : '퇴학'}
                               </Badge>
                               {student.is_priority && (
                                 <Badge variant="outline" className="text-orange-600 border-orange-300">
@@ -1684,10 +1690,10 @@ const StudentManagementContent = () => {
   );
 
   const renderTeacherTab = () => {
-    const filteredTeachers = selectedTeacherBranch === 'all' 
-      ? teachers 
+    const filteredTeachers = selectedTeacherBranch === 'all'
+      ? teachers
       : teachers.filter(teacher => teacher.branch === selectedTeacherBranch);
-      
+
     return (
       <div className="space-y-4">
         {/* 강사 선택 */}
@@ -1710,7 +1716,7 @@ const StudentManagementContent = () => {
                   <SelectItem value="namwirye">남위례</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <Label htmlFor="teacher-select" className="min-w-fit">담당 강사:</Label>
               <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
                 <SelectTrigger className="w-64">
@@ -1727,157 +1733,157 @@ const StudentManagementContent = () => {
               </Select>
             </div>
 
-          {selectedTeacher && selectedTeacher !== 'all' ? (
-            <div>
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">{selectedTeacher} 강사 담당 학원생</h3>
-                <p className="text-sm text-muted-foreground">
-                  총 {getStudentsByTeacher(selectedTeacher).length}명의 학원생
-                </p>
-              </div>
-              
-              {getStudentsByTeacher(selectedTeacher).length === 0 ? (
-                <div className="text-center py-8">
-                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg font-medium">담당 학원생이 없습니다</p>
-                  <p className="text-muted-foreground">해당 강사에게 배정된 학원생이 없습니다.</p>
+            {selectedTeacher && selectedTeacher !== 'all' ? (
+              <div>
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold">{selectedTeacher} 강사 담당 학원생</h3>
+                  <p className="text-sm text-muted-foreground">
+                    총 {getStudentsByTeacher(selectedTeacher).length}명의 학원생
+                  </p>
                 </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>학원생명</TableHead>
-                        <TableHead>학교급</TableHead>
-                        <TableHead>수강과목</TableHead>
-                        <TableHead>수업시간</TableHead>
-                        <TableHead>연락처</TableHead>
-                        <TableHead>상태</TableHead>
-                        <TableHead>관리</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {getStudentsByTeacher(selectedTeacher).map((student) => {
-                        const studentScheduleData = studentSchedules.filter(ss => 
-                          ss.student_id === student.id && ss.schedules?.teacher_name === selectedTeacher
-                        );
-                        
-                        return (
-                          <TableRow key={student.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                  <span className="text-blue-600 font-semibold text-sm">
-                                    {student.full_name?.charAt(0)}
-                                  </span>
-                                </div>
-                                <div>
-                                  <p className="font-medium">
-                                    {student.full_name}
-                                    {student.is_priority && (
-                                      <Star className="h-3 w-3 text-orange-500 inline ml-1" />
+
+                {getStudentsByTeacher(selectedTeacher).length === 0 ? (
+                  <div className="text-center py-8">
+                    <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-lg font-medium">담당 학원생이 없습니다</p>
+                    <p className="text-muted-foreground">해당 강사에게 배정된 학원생이 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>학원생명</TableHead>
+                          <TableHead>학교급</TableHead>
+                          <TableHead>수강과목</TableHead>
+                          <TableHead>수업시간</TableHead>
+                          <TableHead>연락처</TableHead>
+                          <TableHead>상태</TableHead>
+                          <TableHead>관리</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {getStudentsByTeacher(selectedTeacher).map((student) => {
+                          const studentScheduleData = studentSchedules.filter(ss =>
+                            ss.student_id === student.id && ss.schedules?.teacher_name === selectedTeacher
+                          );
+
+                          return (
+                            <TableRow key={student.id}>
+                              <TableCell>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <span className="text-blue-600 font-semibold text-sm">
+                                      {student.full_name?.charAt(0)}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">
+                                      {student.full_name}
+                                      {student.is_priority && (
+                                        <Star className="h-3 w-3 text-orange-500 inline ml-1" />
+                                      )}
+                                    </p>
+                                    {student.school && (
+                                      <p className="text-xs text-muted-foreground">{student.school}</p>
                                     )}
-                                  </p>
-                                  {student.school && (
-                                    <p className="text-xs text-muted-foreground">{student.school}</p>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {student.grade && (
+                                  <Badge variant="outline">{student.grade}</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openCoursesModal(student)}
+                                  className="flex items-center gap-1 h-auto p-1"
+                                >
+                                  <BookOpen className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-sm">{getStudentSchedules(student.id).length}개</span>
+                                </Button>
+                              </TableCell>
+                              <TableCell>
+                                <div className="space-y-1">
+                                  {studentScheduleData.map((ss, index) => (
+                                    <div key={index} className="text-sm">
+                                      {getDayName(ss.schedules?.day_of_week)} {ss.schedules?.time_slot}
+                                    </div>
+                                  ))}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="space-y-1">
+                                  {student.phone && (
+                                    <div className="flex items-center gap-1">
+                                      <Phone className="h-3 w-3 text-muted-foreground" />
+                                      <span className="text-xs">{student.phone}</span>
+                                    </div>
+                                  )}
+                                  {student.parent_phone && (
+                                    <div className="flex items-center gap-1">
+                                      <Phone className="h-3 w-3 text-muted-foreground" />
+                                      <span className="text-xs text-gray-500">부모: {student.parent_phone}</span>
+                                    </div>
                                   )}
                                 </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {student.grade && (
-                                <Badge variant="outline">{student.grade}</Badge>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openCoursesModal(student)}
-                                className="flex items-center gap-1 h-auto p-1"
-                              >
-                                <BookOpen className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-sm">{getStudentSchedules(student.id).length}개</span>
-                              </Button>
-                            </TableCell>
-                            <TableCell>
-                              <div className="space-y-1">
-                                {studentScheduleData.map((ss, index) => (
-                                  <div key={index} className="text-sm">
-                                    {getDayName(ss.schedules?.day_of_week)} {ss.schedules?.time_slot}
-                                  </div>
-                                ))}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="space-y-1">
-                                {student.phone && (
-                                  <div className="flex items-center gap-1">
-                                    <Phone className="h-3 w-3 text-muted-foreground" />
-                                    <span className="text-xs">{student.phone}</span>
-                                  </div>
-                                )}
-                                {student.parent_phone && (
-                                  <div className="flex items-center gap-1">
-                                    <Phone className="h-3 w-3 text-muted-foreground" />
-                                    <span className="text-xs text-gray-500">부모: {student.parent_phone}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={student.status === 'active' ? "default" : "secondary"}>
-                                {student.status === 'active' ? '재학' : 
-                                 student.status === 'inactive' ? '휴학' : '퇴학'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openEditDialog(student)}
-                                  title="편집"
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleViewExamScores(student)}
-                                  title="성적 확인"
-                                >
-                                  <BarChart3 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openEnrollmentModal(student)}
-                                  title="수업 등록"
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <GraduationCap className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-lg font-medium">강사를 선택해주세요</p>
-              <p className="text-muted-foreground">강사를 선택하면 담당 학원생 목록을 확인할 수 있습니다.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={student.status === 'active' ? "default" : "secondary"}>
+                                  {student.status === 'active' ? '재학' :
+                                    student.status === 'inactive' ? '휴학' : '퇴학'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openEditDialog(student)}
+                                    title="편집"
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleViewExamScores(student)}
+                                    title="성적 확인"
+                                  >
+                                    <BarChart3 className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openEnrollmentModal(student)}
+                                    title="수업 등록"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <GraduationCap className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-lg font-medium">강사를 선택해주세요</p>
+                <p className="text-muted-foreground">강사를 선택하면 담당 학원생 목록을 확인할 수 있습니다.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
   };
 
   const renderGradeTab = () => {
@@ -2011,8 +2017,8 @@ const StudentManagementContent = () => {
                             </TableCell>
                             <TableCell>
                               <Badge variant={student.status === 'active' ? "default" : "secondary"}>
-                                {student.status === 'active' ? '재학' : 
-                                 student.status === 'inactive' ? '휴학' : '퇴학'}
+                                {student.status === 'active' ? '재학' :
+                                  student.status === 'inactive' ? '휴학' : '퇴학'}
                               </Badge>
                             </TableCell>
                             <TableCell>
@@ -2065,26 +2071,26 @@ const StudentManagementContent = () => {
     }).sort((a, b) => (b.average || 0) - (a.average || 0));
 
     const scoreGroups = [
-      { 
-        category: '상위권', 
+      {
+        category: '상위권',
         students: studentsWithScores.filter(s => s.gradeInfo.category === '상위권'),
         color: 'green',
         description: '평균 90점 이상'
       },
-      { 
-        category: '중위권', 
+      {
+        category: '중위권',
         students: studentsWithScores.filter(s => s.gradeInfo.category === '중위권'),
         color: 'blue',
         description: '평균 70-89점'
       },
-      { 
-        category: '하위권', 
+      {
+        category: '하위권',
         students: studentsWithScores.filter(s => s.gradeInfo.category === '하위권'),
         color: 'red',
         description: '평균 70점 미만'
       },
-      { 
-        category: '미측정', 
+      {
+        category: '미측정',
         students: studentsWithScores.filter(s => s.gradeInfo.category === '미측정'),
         color: 'gray',
         description: '성적 기록 없음'
@@ -2210,8 +2216,8 @@ const StudentManagementContent = () => {
                             </TableCell>
                             <TableCell>
                               <Badge variant={student.status === 'active' ? "default" : "secondary"}>
-                                {student.status === 'active' ? '재학' : 
-                                 student.status === 'inactive' ? '휴학' : '퇴학'}
+                                {student.status === 'active' ? '재학' :
+                                  student.status === 'inactive' ? '휴학' : '퇴학'}
                               </Badge>
                             </TableCell>
                             <TableCell>
@@ -2271,34 +2277,34 @@ const StudentManagementContent = () => {
   const fetchAllActiveStudents = async () => {
     try {
       console.log('🔍 활성 학생 조회 시작');
-      
+
       // 디버깅: 테이블 구조 확인
       console.log('🔍 테이블 구조 확인 중...');
-      
+
       // student_enrollments 테이블 샘플 조회
       const { data: enrollmentsTest, error: enrollmentsError } = await supabase
         .from('student_enrollments')
         .select('*')
         .limit(1);
-      
+
       console.log('student_enrollments 테이블 샘플:', enrollmentsTest, enrollmentsError);
-      
+
       // schedules 테이블 샘플 조회
       const { data: schedulesTest, error: schedulesError } = await supabase
         .from('schedules')
         .select('*')
         .limit(1);
-      
+
       console.log('schedules 테이블 샘플:', schedulesTest, schedulesError);
-      
+
       // students 테이블 샘플 조회
       const { data: studentsTest, error: studentsError } = await supabase
         .from('students')
         .select('*')
         .limit(1);
-      
+
       console.log('students 테이블 샘플:', studentsTest, studentsError);
-      
+
       // 1. 활성 학생 등록 정보 조회
       const { data: enrollments, error } = await supabase
         .from('student_enrollments')
@@ -2321,21 +2327,21 @@ const StudentManagementContent = () => {
         .from('payments')
         .select('*')
         .limit(1);
-      
+
       console.log('payments 테이블 샘플:', paymentsTest, paymentsTestError);
-      
+
       // 3. 이번달 이미 결제한 학생들 조회
       const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM 형식
       console.log('🗓️ 현재 월:', currentMonth);
-      
+
       // 먼저 간단한 쿼리로 테스트
       const { data: simplePayments, error: simplePaymentError } = await supabase
         .from('payments')
         .select('*')
         .limit(5);
-      
+
       console.log('payments 테이블 전체 샘플:', simplePayments, simplePaymentError);
-      
+
       // 실제 이번달 결제 정보 조회
       const { data: currentPayments, error: paymentError } = await supabase
         .from('payments')
@@ -2352,7 +2358,7 @@ const StudentManagementContent = () => {
           code: paymentError?.code,
           query: `payment_date >= '${currentMonth}-01' AND payment_date <= '${currentMonth}-31'`
         });
-        
+
         // payments 테이블에 접근할 수 없는 경우 빈 배열로 처리
         console.log('⚠️ payments 테이블 접근 불가, 모든 학생을 미납부로 간주');
         setAllActiveStudents(enrollments || []);
@@ -2377,7 +2383,7 @@ const StudentManagementContent = () => {
       console.log('⏳ 미납부 학생:', unpaidStudents.length, '명');
 
       setAllActiveStudents(unpaidStudents);
-      
+
     } catch (error) {
       console.error('❌ 활성 학생 조회 오류:', {
         error,
@@ -2386,17 +2392,17 @@ const StudentManagementContent = () => {
         hint: error?.hint,
         code: error?.code
       });
-      
+
       let errorMessage = '학생 목록을 불러오는 중 오류가 발생했습니다.';
-      
+
       if (error?.message) {
         errorMessage += ` (${error.message})`;
       }
-      
+
       if (error?.code === 'PGRST116') {
         errorMessage = '테이블 또는 컬럼을 찾을 수 없습니다. 데이터베이스 구조를 확인해주세요.';
       }
-      
+
       toast.error(errorMessage);
     }
   };
@@ -2526,7 +2532,7 @@ const StudentManagementContent = () => {
                             </Badge>
                           )}
                         </TableCell>
-                         <TableCell>
+                        <TableCell>
                           <div className="space-y-1">
                             {student.phone && (
                               <div className="flex items-center gap-1">
@@ -2670,7 +2676,7 @@ const StudentManagementContent = () => {
               학원생의 기본 정보를 입력해주세요.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-4">
             {/* 기본 정보 */}
             <div className="grid grid-cols-4 items-center gap-4">
@@ -2686,7 +2692,7 @@ const StudentManagementContent = () => {
                 placeholder="학원생 이름"
               />
             </div>
-            
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">
                 이메일 *
@@ -2701,7 +2707,7 @@ const StudentManagementContent = () => {
                 placeholder="example@email.com"
               />
             </div>
-            
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="phone" className="text-right">
                 연락처
@@ -2720,8 +2726,8 @@ const StudentManagementContent = () => {
               <Label htmlFor="grade" className="text-right">
                 학교급
               </Label>
-              <Select 
-                value={studentForm.grade} 
+              <Select
+                value={studentForm.grade}
                 onValueChange={(value) => {
                   handleSelectChange('grade', value);
                   // 학교급 변경시 학년 초기화
@@ -2743,8 +2749,8 @@ const StudentManagementContent = () => {
               <Label htmlFor="branch" className="text-right">
                 지점
               </Label>
-              <Select 
-                value={studentForm.branch} 
+              <Select
+                value={studentForm.branch}
                 onValueChange={(value) => handleSelectChange('branch', value)}
               >
                 <SelectTrigger className="col-span-3">
@@ -2762,8 +2768,8 @@ const StudentManagementContent = () => {
               <Label htmlFor="school_grade" className="text-right">
                 학년
               </Label>
-              <Select 
-                value={studentForm.school_grade} 
+              <Select
+                value={studentForm.school_grade}
                 onValueChange={(value) => handleSelectChange('school_grade', value)}
                 disabled={!studentForm.grade}
               >
@@ -2843,8 +2849,8 @@ const StudentManagementContent = () => {
               <Label htmlFor="status" className="text-right">
                 재학 상태
               </Label>
-              <Select 
-                value={studentForm.status} 
+              <Select
+                value={studentForm.status}
                 onValueChange={(value) => handleSelectChange('status', value)}
               >
                 <SelectTrigger className="col-span-3">
@@ -2866,7 +2872,7 @@ const StudentManagementContent = () => {
                 <Switch
                   id="is_priority"
                   checked={studentForm.is_priority}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     setStudentForm({ ...studentForm, is_priority: checked })
                   }
                 />
@@ -2876,7 +2882,7 @@ const StudentManagementContent = () => {
               </div>
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               취소
@@ -2900,7 +2906,7 @@ const StudentManagementContent = () => {
               엑셀 파일을 업로드하여 학원생 목록을 일괄 등록할 수 있습니다. 먼저 템플릿을 다운로드해서 형식을 확인해주세요.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-6 py-4">
             {/* 템플릿 다운로드 */}
             <Card>
@@ -2914,9 +2920,9 @@ const StudentManagementContent = () => {
                 <p className="text-sm text-muted-foreground mb-3">
                   먼저 엑셀 템플릿을 다운로드하여 올바른 형식을 확인하세요.
                 </p>
-                <Button 
-                  onClick={downloadTemplate} 
-                  variant="outline" 
+                <Button
+                  onClick={downloadTemplate}
+                  variant="outline"
                   className="w-full"
                   disabled={isProcessing}
                 >
@@ -2954,7 +2960,7 @@ const StudentManagementContent = () => {
                       />
                     </label>
                   </div>
-                  
+
                   {excelFile && (
                     <Alert>
                       <FileSpreadsheet className="h-4 w-4" />
@@ -3133,10 +3139,10 @@ const StudentManagementContent = () => {
               </Card>
             )}
           </div>
-          
+
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 setIsExcelDialogOpen(false);
                 resetExcelUpload();
@@ -3145,7 +3151,7 @@ const StudentManagementContent = () => {
               닫기
             </Button>
             {excelData.length > 0 && !isProcessing && !uploadResults && (
-              <Button 
+              <Button
                 onClick={handleBulkUpload}
                 disabled={isProcessing}
                 className="flex items-center gap-2"
@@ -3182,12 +3188,12 @@ const StudentManagementContent = () => {
               {selectedStudentForEnrollment?.full_name} 학생을 수업에 등록합니다.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="schedule_select">수업 선택 *</Label>
-              <Select 
-                value={enrollmentForm.schedule_id} 
+              <Select
+                value={enrollmentForm.schedule_id}
                 onValueChange={handleScheduleSelect}
               >
                 <SelectTrigger>
@@ -3195,15 +3201,15 @@ const StudentManagementContent = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {schedules
-                    .filter(schedule => schedule.is_active && 
+                    .filter(schedule => schedule.is_active &&
                       (schedule.current_students || 0) < (schedule.max_students || 30))
                     .map((schedule) => (
-                    <SelectItem key={schedule.id} value={schedule.id}>
-                      {schedule.grade} - {schedule.subject} 
-                      ({getDayName(schedule.day_of_week)} {schedule.time_slot})
-                      {schedule.teacher_name && ` - ${schedule.teacher_name}`}
-                    </SelectItem>
-                  ))}
+                      <SelectItem key={schedule.id} value={schedule.id}>
+                        {schedule.grade} - {schedule.subject}
+                        ({getDayName(schedule.day_of_week)} {schedule.time_slot})
+                        {schedule.teacher_name && ` - ${schedule.teacher_name}`}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -3246,12 +3252,12 @@ const StudentManagementContent = () => {
               />
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEnrollmentModalOpen(false)}>
               취소
             </Button>
-            <Button 
+            <Button
               onClick={handleEnrollStudent}
               disabled={!enrollmentForm.schedule_id || !enrollmentForm.start_date}
             >
@@ -3267,7 +3273,7 @@ const StudentManagementContent = () => {
           <DialogHeader>
             <DialogTitle>결제 기록 추가</DialogTitle>
             <DialogDescription>
-              {selectedStudentForPayment && 
+              {selectedStudentForPayment &&
                 `${selectedStudentForPayment.student?.full_name}님의 결제 기록을 추가합니다.`
               }
             </DialogDescription>
@@ -3294,7 +3300,7 @@ const StudentManagementContent = () => {
                 />
               </div>
             </div>
-            
+
             <div>
               <Label htmlFor="payment-method">결제 방법</Label>
               <Select value={paymentForm.payment_method} onValueChange={(value) => setPaymentForm({ ...paymentForm, payment_method: value })}>
@@ -3330,7 +3336,7 @@ const StudentManagementContent = () => {
                 />
               </div>
             </div>
-            
+
             <div>
               <Label htmlFor="payment-notes">메모</Label>
               <Textarea
@@ -3358,7 +3364,7 @@ const StudentManagementContent = () => {
           <DialogHeader>
             <DialogTitle>상담 기록</DialogTitle>
             <DialogDescription>
-              {selectedStudentForMemo && 
+              {selectedStudentForMemo &&
                 `${selectedStudentForMemo.student?.full_name}님의 상담 기록을 관리합니다.`
               }
             </DialogDescription>
@@ -3383,7 +3389,7 @@ const StudentManagementContent = () => {
                 </div>
               </div>
             )}
-            
+
             {/* 새 상담 기록 입력 */}
             <div>
               <Label htmlFor="memo-type">상담 유형</Label>
@@ -3401,7 +3407,7 @@ const StudentManagementContent = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <Label htmlFor="memo-content">상담 내용</Label>
               <Textarea
@@ -3433,7 +3439,7 @@ const StudentManagementContent = () => {
               이번달 수업료를 납부한 학생들을 선택해주세요.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             {/* 결제 정보 설정 */}
             <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
@@ -3491,7 +3497,7 @@ const StudentManagementContent = () => {
                   <Label htmlFor="select-all-payments" className="text-sm">전체 선택</Label>
                 </div>
               </div>
-              
+
               {allActiveStudents.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <CreditCard className="h-12 w-12 mx-auto mb-4 text-gray-300" />
@@ -3513,7 +3519,7 @@ const StudentManagementContent = () => {
                     </TableHeader>
                     <TableBody>
                       {allActiveStudents.map((student) => {
-                        const isSelected = selectedStudentsForPayment.some(s => 
+                        const isSelected = selectedStudentsForPayment.some(s =>
                           `${s.student_id}-${s.schedule_id}` === `${student.student_id}-${student.schedule_id}`
                         );
                         return (
@@ -3554,12 +3560,12 @@ const StudentManagementContent = () => {
               )}
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCurrentMonthPaymentModalOpen(false)}>
               취소
             </Button>
-            <Button 
+            <Button
               onClick={handleBulkPaymentSubmit}
               disabled={selectedStudentsForPayment.length === 0}
             >

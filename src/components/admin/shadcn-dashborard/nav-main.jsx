@@ -30,9 +30,20 @@ export function NavMain({ items }) {
   const shouldBeOpen = (item) => {
     // 하위 메뉴가 있는 경우, 하위 메뉴 중 하나라도 활성화되어 있으면 열림
     if (item.items && item.items.length > 0) {
+      // 현재 URL의 기본 경로 (path 파라미터 제외)
+      const currentBasePath = pathname;
+      
       return item.items.some(subItem => {
-        const subItemPath = new URL(subItem.url, 'http://localhost').searchParams.get('path');
-        const subItemTab = new URL(subItem.url, 'http://localhost').searchParams.get('tab');
+        // 하위 메뉴 항목의 기본 경로 추출
+        const subItemUrl = new URL(subItem.url, 'http://localhost');
+        const subItemBasePath = subItemUrl.pathname;
+        const subItemPath = subItemUrl.searchParams.get('path');
+        const subItemTab = subItemUrl.searchParams.get('tab');
+        
+        // 기본 경로가 일치하는지 먼저 확인
+        if (currentBasePath !== subItemBasePath) {
+          return false;
+        }
         
         // 정확한 경로와 탭 매칭
         if (subItemTab && currentTab) {

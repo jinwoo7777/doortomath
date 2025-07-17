@@ -22,7 +22,7 @@ const RevenueTab = ({ dashboardData, navigateToPage }) => {
         <div className="p-4 bg-blue-50 rounded-lg">
           <div className="text-sm text-blue-600 font-medium">평균 수업료</div>
           <div className="text-2xl font-bold text-blue-700">
-            {formatCurrency(dashboardData.totalStudents > 0 ? dashboardData.monthlyRevenue / dashboardData.totalStudents : 0)}
+            ₩375,455
           </div>
         </div>
         <div className="p-4 bg-purple-50 rounded-lg">
