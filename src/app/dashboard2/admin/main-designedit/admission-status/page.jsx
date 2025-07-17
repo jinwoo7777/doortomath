@@ -7,6 +7,7 @@ import { ROLES } from '@/lib/auth/constants';
 import { AppSidebar } from "@/components/admin/shadcn-dashborard/app-sidebar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -247,18 +248,7 @@ export default function Page() {
   if (isPageLoading) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="text-center">
-          <div 
-            className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" 
-            role="status" 
-            aria-busy="true"
-          >
-            <span className="sr-only">로딩 중...</span>
-          </div>
-          <p className="mt-4 text-muted-foreground">
-            대시보드 데이터를 불러오는 중...
-          </p>
-        </div>
+        <LoadingSpinner size="xl" text="대시보드 데이터를 불러오는 중..." />
       </div>
     );
   }

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import { BlogPostEditor } from '@/components/admin/BlogPostEditor';
 import { AppSidebar } from "@/components/admin/shadcn-dashborard/app-sidebar";
+import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   SidebarInset,
   SidebarProvider,
@@ -326,7 +327,7 @@ export default function EditBlogPost() {
           <div className="flex flex-1 flex-col gap-6 p-4 pt-0">
             <div className="flex h-[calc(100vh-8rem)] items-center justify-center">
               <div className="text-center">
-                <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                <LoadingSpinner text="데이터를 불러오는 중..." />
                 <p className="mt-4 text-muted-foreground">블로그 포스트를 불러오는 중...</p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   로딩 상태: loading={loading?.toString()}, roleLoaded={roleLoaded?.toString()}, isLoading={isLoading?.toString()}

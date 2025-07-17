@@ -87,7 +87,8 @@ const SalesManagementContent = () => {
     oneMonth: 0,
     twoMonth: 0,
     threeMonthPlus: 0,
-    totalAmount: 0
+    totalAmount: 0,
+    unpaidCount: 0
   });
   const [paidStudents, setPaidStudents] = useState([]);
   const [paidStats, setPaidStats] = useState({
@@ -556,14 +557,14 @@ const SalesManagementContent = () => {
 
       // 각 등록에 대해 연체 상태 계산
       const overdueList = [];
-      let stats = { total: 0, oneMonth: 0, twoMonth: 0, threeMonthPlus: 0, totalAmount: 0 };
+      let stats = { total: 0, oneMonth: 0, twoMonth: 0, threeMonthPlus: 0, totalAmount: 0, unpaidCount: 0 };
 
       for (const enrollment of enrollments) {
         const startDate = new Date(enrollment.start_date);
         const currentDate = new Date();
         
-        // 수강 시작일부터 현재까지의 개월 수 계산
-        const monthsElapsed = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24 * 30));
+        // 수강 시작일부터 현재까지의 개월 수 계산 (최소 1개월)
+        const monthsElapsed = Math.max(1, Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24 * 30)));
         
         // 결제 기록 조회
         const { data: payments } = await supabase
@@ -575,15 +576,19 @@ const SalesManagementContent = () => {
         const paidMonths = payments?.length || 0;
         const overdueMonths = Math.max(0, monthsElapsed - paidMonths);
         
-        if (overdueMonths > 0) {
-          const overdueAmount = overdueMonths * (enrollment.monthly_fee || 0);
+        // 미입금자 (결제 기록이 없는 학생)와 연체자 (일부 결제했지만 부족한 학생) 모두 포함
+        if (overdueMonths > 0 || paidMonths === 0) {
+          const actualOverdueMonths = Math.max(1, overdueMonths); // 최소 1개월 연체로 처리
+          const overdueAmount = actualOverdueMonths * (enrollment.monthly_fee || 0);
           
           const overdueStudent = {
             ...enrollment,
             student: enrollment.students,
             schedule: enrollment.schedules,
-            overdueMonths,
+            overdueMonths: actualOverdueMonths,
             overdueAmount,
+            paidMonths,
+            isUnpaid: paidMonths === 0, // 미입금자 여부 표시
             lastPaymentDate: payments?.length > 0 ? 
               new Date(Math.max(...payments.map(p => new Date(p.payment_date)))) : null
           };
@@ -592,9 +597,11 @@ const SalesManagementContent = () => {
           stats.total += 1;
           stats.totalAmount += overdueAmount;
           
-          if (overdueMonths === 1) stats.oneMonth += 1;
-          else if (overdueMonths === 2) stats.twoMonth += 1;
-          else if (overdueMonths >= 3) stats.threeMonthPlus += 1;
+          if (paidMonths === 0) stats.unpaidCount += 1; // 미입금자 카운트
+          
+          if (actualOverdueMonths === 1) stats.oneMonth += 1;
+          else if (actualOverdueMonths === 2) stats.twoMonth += 1;
+          else if (actualOverdueMonths >= 3) stats.threeMonthPlus += 1;
         }
       }
 
@@ -1001,7 +1008,7 @@ const SalesManagementContent = () => {
     return (
       <div className="space-y-6">
         {/* 연체 현황 요약 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">전체 연체생</CardTitle>
@@ -1011,6 +1018,16 @@ const SalesManagementContent = () => {
               <div className="text-xs text-gray-500">
                 총 연체금액: {formatCurrency(overdueStats.totalAmount)}
               </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">미입금자</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-700">{overdueStats.unpaidCount}명</div>
+              <div className="text-xs text-gray-500">결제 기록 없음</div>
             </CardContent>
           </Card>
           
@@ -1104,9 +1121,16 @@ const SalesManagementContent = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getOverdueBadgeVariant(student.overdueMonths)}>
-                          {student.overdueMonths}개월
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant={getOverdueBadgeVariant(student.overdueMonths)}>
+                            {student.overdueMonths}개월
+                          </Badge>
+                          {student.isUnpaid && (
+                            <Badge variant="destructive" className="text-xs">
+                              미입금자
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-red-600 font-medium">
                         {formatCurrency(student.overdueAmount)}
@@ -1114,7 +1138,7 @@ const SalesManagementContent = () => {
                       <TableCell>
                         {student.lastPaymentDate ? 
                           student.lastPaymentDate.toLocaleDateString('ko-KR') : 
-                          '결제 기록 없음'
+                          <span className="text-red-500 font-medium">결제 기록 없음</span>
                         }
                       </TableCell>
                       <TableCell>{student.student?.phone}</TableCell>
@@ -1258,13 +1282,18 @@ const SalesManagementContent = () => {
                           >
                             <Edit2 className="h-3 w-3" />
                           </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleDeletePayment(payment.id)}
+                          <button
+                            type="button"
+                            className="ml-1 p-0 bg-transparent border-none cursor-pointer hover:text-red-500 transition-colors"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDeletePayment(payment.id);
+                            }}
+                            aria-label="입금 기록 삭제"
                           >
                             <X className="h-3 w-3" />
-                          </Button>
+                          </button>
                         </div>
                       </TableCell>
                     </TableRow>

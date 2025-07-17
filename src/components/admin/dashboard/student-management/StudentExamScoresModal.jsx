@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -405,10 +406,7 @@ export default function StudentExamScoresModal({ student, isOpen, onClose }) {
                 </CardHeader>
                 <CardContent>
                   {loading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                      <p className="mt-2 text-sm text-gray-600">데이터 로딩 중...</p>
-                    </div>
+                    <LoadingSpinner text="데이터 로딩 중..." />
                   ) : filteredScores.length > 0 ? (
                     <Table>
                       <TableHeader>
@@ -465,10 +463,7 @@ export default function StudentExamScoresModal({ student, isOpen, onClose }) {
                 </CardHeader>
                 <CardContent>
                   {loading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                      <p className="mt-2 text-sm text-gray-600">데이터 로딩 중...</p>
-                    </div>
+                    <LoadingSpinner text="데이터 로딩 중..." />
                   ) : filteredSessions.length > 0 ? (
                     <Table>
                       <TableHeader>

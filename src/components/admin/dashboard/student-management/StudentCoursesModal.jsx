@@ -57,15 +57,30 @@ const StudentCoursesModal = ({
   const [isAddingCourse, setIsAddingCourse] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState('');
   const [enrollmentNotes, setEnrollmentNotes] = useState('');
+  const [selectedBranch, setSelectedBranch] = useState('');
   
   const supabase = createClientComponentClient();
 
   useEffect(() => {
     if (isOpen && student) {
       fetchStudentCourses();
-      fetchAvailableSchedules();
+      // 학생의 지점을 기본값으로 설정
+      if (student.branch) {
+        setSelectedBranch(student.branch);
+      }
     }
   }, [isOpen, student]);
+
+  useEffect(() => {
+    if (selectedBranch) {
+      fetchAvailableSchedules(selectedBranch);
+    }
+  }, [selectedBranch]);
+
+  const handleBranchChange = (branch) => {
+    setSelectedBranch(branch);
+    setSelectedSchedule(''); // 지점 변경 시 선택된 강의 초기화
+  };
 
   const fetchStudentCourses = async () => {
     try {
@@ -84,7 +99,8 @@ const StudentCoursesModal = ({
             classroom,
             description,
             max_students,
-            current_students
+            current_students,
+            branch
           )
         `)
         .eq('student_id', student.id);
@@ -99,12 +115,18 @@ const StudentCoursesModal = ({
     }
   };
 
-  const fetchAvailableSchedules = async () => {
+  const fetchAvailableSchedules = async (branch = null) => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('schedules')
         .select('*')
-        .eq('is_active', true)
+        .eq('is_active', true);
+      
+      if (branch) {
+        query = query.eq('branch', branch);
+      }
+      
+      const { data, error } = await query
         .order('grade', { ascending: true })
         .order('day_of_week', { ascending: true })
         .order('time_slot', { ascending: true });
@@ -120,6 +142,15 @@ const StudentCoursesModal = ({
   const getDayName = (dayOfWeek) => {
     const days = ['', '월', '화', '수', '목', '금', '토', '일'];
     return days[dayOfWeek] || '';
+  };
+
+  const getBranchName = (branch) => {
+    switch(branch) {
+      case 'bukwirye': return '북위례';
+      case 'namwirye': return '남위례';
+      case 'daechi': return '대치';
+      default: return '대치';
+    }
   };
 
   const getStatusText = (status) => {
@@ -174,6 +205,7 @@ const StudentCoursesModal = ({
       setIsAddingCourse(false);
       setSelectedSchedule('');
       setEnrollmentNotes('');
+      setSelectedBranch('');
       fetchStudentCourses();
       onUpdate && onUpdate();
     } catch (error) {
@@ -301,6 +333,7 @@ const StudentCoursesModal = ({
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>지점</TableHead>
                       <TableHead>과목</TableHead>
                       <TableHead>요일/시간</TableHead>
                       <TableHead>강사</TableHead>
@@ -313,6 +346,11 @@ const StudentCoursesModal = ({
                   <TableBody>
                     {studentCourses.map((course) => (
                       <TableRow key={course.id}>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {getBranchName(course.schedules.branch)}
+                          </Badge>
+                        </TableCell>
                         <TableCell>
                           <div>
                             <div className="font-medium">{course.schedules.subject}</div>
@@ -426,25 +464,47 @@ const StudentCoursesModal = ({
             <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium">새 강의 추가</h4>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
+                <button
+                  type="button"
+                  className="ml-1 p-0 bg-transparent border-none cursor-pointer hover:text-red-500 transition-colors"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     setIsAddingCourse(false);
                     setSelectedSchedule('');
                     setEnrollmentNotes('');
+                    setSelectedBranch('');
                   }}
+                  aria-label="강의 추가 폼 닫기"
                 >
                   <X className="h-4 w-4" />
-                </Button>
+                </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="branch">지점 선택</Label>
+                  <Select value={selectedBranch} onValueChange={handleBranchChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="지점을 선택하세요" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daechi">대치</SelectItem>
+                      <SelectItem value="bukwirye">북위례</SelectItem>
+                      <SelectItem value="namwirye">남위례</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div>
                   <Label htmlFor="schedule">강의 선택</Label>
-                  <Select value={selectedSchedule} onValueChange={setSelectedSchedule}>
+                  <Select 
+                    value={selectedSchedule} 
+                    onValueChange={setSelectedSchedule}
+                    disabled={!selectedBranch}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="강의를 선택하세요" />
+                      <SelectValue placeholder={selectedBranch ? "강의를 선택하세요" : "먼저 지점을 선택하세요"} />
                     </SelectTrigger>
                     <SelectContent>
                       {filteredAvailableSchedules.map((schedule) => (

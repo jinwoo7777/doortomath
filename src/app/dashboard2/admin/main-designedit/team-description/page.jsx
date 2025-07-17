@@ -7,9 +7,10 @@ import { useAuth } from '@/hooks/useAuth';
 
 import { AppSidebar } from "@/components/admin/shadcn-dashborard/app-sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { LoadingSpinner, InlineSpinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Save, Image as ImageIcon, PlusCircle, X } from 'lucide-react';
+import { Save, Image as ImageIcon, PlusCircle, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -43,7 +44,7 @@ const ImagePreview = ({ src, alt, className = "w-full h-32" }) => {
     <div className={`${className} bg-muted rounded border overflow-hidden flex items-center justify-center relative`}>
       {imageLoading && (
         <div className="absolute inset-0 bg-muted/50 flex items-center justify-center">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          <InlineSpinner size="md" />
         </div>
       )}
       <img
@@ -186,18 +187,7 @@ export default function Page() {
   if (isPageLoading) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="text-center">
-          <div 
-            className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" 
-            role="status" 
-            aria-busy="true"
-          >
-            <span className="sr-only">로딩 중...</span>
-          </div>
-          <p className="mt-4 text-muted-foreground">
-            팀 소개 데이터를 불러오는 중...
-          </p>
-        </div>
+        <LoadingSpinner size="xl" text="팀 소개 데이터를 불러오는 중..." />
       </div>
     );
   }
@@ -295,14 +285,18 @@ export default function Page() {
                     <Card key={member.id || index} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start mb-4">
                         <h3 className="text-lg font-semibold">팀 멤버 {index + 1}</h3>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveTeamMember(index)}
-                          className="text-red-500 hover:text-red-700"
+                        <button
+                          type="button"
+                          className="ml-1 p-0 bg-transparent border-none cursor-pointer hover:text-red-500 transition-colors"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleRemoveTeamMember(index);
+                          }}
+                          aria-label="팀 멤버 삭제"
                         >
                           <X className="h-4 w-4" />
-                        </Button>
+                        </button>
                       </div>
 
                       <div className="space-y-4">
@@ -393,7 +387,7 @@ export default function Page() {
                     >
                       {isSaving ? (
                         <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <InlineSpinner />
                           저장 중...
                         </>
                       ) : (

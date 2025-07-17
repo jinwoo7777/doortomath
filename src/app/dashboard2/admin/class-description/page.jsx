@@ -7,6 +7,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { toast } from 'sonner';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { LoadingSpinner, InlineSpinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -558,7 +559,7 @@ export default function ClassDescriptionPage({ initialTab }) {
                 {pageLoading ? (
                   <div className="flex justify-center items-center py-8">
                     <div className="text-center">
-                      <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                      <InlineSpinner />
                       <p className="mt-2 text-sm text-muted-foreground">수업을 불러오는 중...</p>
                     </div>
                   </div>
@@ -637,7 +638,7 @@ export default function ClassDescriptionPage({ initialTab }) {
                               disabled={updatingCourses.has(course.id)}
                             >
                               {updatingCourses.has(course.id) ? (
-                                <div className="w-4 h-4 border border-current border-t-transparent rounded-full animate-spin"></div>
+                                <InlineSpinner size="sm" />
                               ) : (
                                 <Trash2 className="h-4 w-4" />
                               )}
@@ -763,7 +764,7 @@ export default function ClassDescriptionPage({ initialTab }) {
                   {/* 상태 표시 */}
                   {isUpdatingVisibility && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <div className="w-4 h-4 border border-current border-t-transparent rounded-full animate-spin"></div>
+                      <InlineSpinner size="sm" />
                       <span>설정을 저장하는 중...</span>
                     </div>
                   )}
@@ -783,7 +784,7 @@ export default function ClassDescriptionPage({ initialTab }) {
         <div className="flex h-[calc(100vh-8rem)] items-center justify-center">
           <div className="text-center">
             <div 
-              className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" 
+              // LoadingSpinner component will be used instead 
               role="status" 
               aria-busy="true"
             >

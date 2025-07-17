@@ -16,6 +16,7 @@ import * as z from 'zod';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { InlineSpinner } from '@/components/ui/spinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
   Form, 
@@ -359,7 +360,7 @@ export default function CourseForm({ courseData, onSuccess }) {
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <InlineSpinner />
                     저장 중...
                   </>
                 ) : (

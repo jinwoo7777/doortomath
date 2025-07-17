@@ -6,15 +6,20 @@ import { supabase } from './supabaseClientBrowser.js';
 /**
  * 모든 수업시간표를 조회한다.
  * @param {string} grade - 학년 필터 (선택사항)
+ * @param {string} branch - 지점 필터 ('daechi', 'bukwirye', 'namwirye')
  * @returns {Promise<Array>} 시간표 배열
  */
-export async function fetchAllSchedules(grade = null) {
+export async function fetchAllSchedules(grade = null, branch = 'daechi') {
   let query = supabase
     .from('schedules')
     .select('*');
     
   if (grade) {
     query = query.eq('grade', grade);
+  }
+  
+  if (branch) {
+    query = query.eq('branch', branch);
   }
   
   const { data, error } = await query
@@ -29,9 +34,12 @@ export async function fetchAllSchedules(grade = null) {
 /**
  * 관리자용: 모든 수업시간표를 조회한다 (비활성 포함).
  * @param {string} grade - 학년 필터 (선택사항)
+ * @param {string} branch - 지점 필터 ('daechi', 'bukwirye', 'namwirye')
  * @returns {Promise<Array>} 시간표 배열
  */
-export async function fetchAllSchedulesForAdmin(grade = null) {
+export async function fetchAllSchedulesForAdmin(grade = null, branch = 'daechi') {
+  console.log('🔍 fetchAllSchedulesForAdmin 호출:', { grade, branch });
+  
   let query = supabase
     .from('schedules')
     .select('*');
@@ -40,9 +48,21 @@ export async function fetchAllSchedulesForAdmin(grade = null) {
     query = query.eq('grade', grade);
   }
   
+  if (branch) {
+    query = query.eq('branch', branch);
+  }
+  
   const { data, error } = await query
     .order('day_of_week', { ascending: true })
     .order('time_slot', { ascending: true });
+
+  console.log('🔍 fetchAllSchedulesForAdmin 결과:', { 
+    grade, 
+    branch, 
+    dataLength: data?.length || 0, 
+    error: error?.message || null,
+    sampleData: data?.slice(0, 2) || []
+  });
 
   if (error) throw error;
   return data ?? [];

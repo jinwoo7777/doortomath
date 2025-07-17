@@ -5,11 +5,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { LoadingSpinner, InlineSpinner } from '@/components/ui/spinner';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
-  Loader2, 
   PlusCircle, 
   MinusCircle
 } from 'lucide-react';
@@ -267,18 +267,7 @@ export default function Page() {
       <SidebarProvider>
         <SidebarInset>
           <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-            <div className="text-center">
-              <div 
-                className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" 
-                role="status" 
-                aria-busy="true"
-              >
-                <span className="sr-only">로딩 중...</span>
-              </div>
-              <p className="mt-4 text-muted-foreground">
-                카테고리 데이터를 불러오는 중...
-              </p>
-            </div>
+            <LoadingSpinner size="xl" text="카테고리 데이터를 불러오는 중..." />
           </div>
         </SidebarInset>
       </SidebarProvider>
@@ -470,7 +459,7 @@ export default function Page() {
                     >
                       {isSaving ? (
                         <>
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          <InlineSpinner />
                           저장 중...
                         </>
                       ) : (

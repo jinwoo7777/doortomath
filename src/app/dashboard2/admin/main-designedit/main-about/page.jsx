@@ -10,9 +10,10 @@ import { useAuth } from '@/hooks/useAuth';
 
 import { AppSidebar } from "@/components/admin/shadcn-dashborard/app-sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { LoadingSpinner, InlineSpinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Save, Image as ImageIcon, PlusCircle, X } from 'lucide-react';
+import { Save, Image as ImageIcon, PlusCircle, X } from 'lucide-react';
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -56,7 +57,7 @@ const ImagePreview = ({ src, alt, className = "w-full h-32" }) => {
     <div className={`${className} bg-muted rounded border overflow-hidden flex items-center justify-center relative`}>
       {imageLoading && (
         <div className="absolute inset-0 bg-muted/50 flex items-center justify-center">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          <InlineSpinner size="md" />
         </div>
       )}
       <img
@@ -232,18 +233,7 @@ export default function Page() {
   if (isPageLoading) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="text-center">
-          <div 
-            className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" 
-            role="status" 
-            aria-busy="true"
-          >
-            <span className="sr-only">로딩 중...</span>
-          </div>
-          <p className="mt-4 text-muted-foreground">
-            학원 소개 데이터를 불러오는 중...
-          </p>
-        </div>
+        <LoadingSpinner size="xl" text="학원 소개 데이터를 불러오는 중..." />
       </div>
     );
   }
@@ -446,12 +436,15 @@ export default function Page() {
                       <div className="md:col-span-1 flex items-start justify-end">
                         <button
                           type="button"
-                          className="text-red-500 hover:text-red-700"
-                          onClick={() => {
+                          className="ml-1 p-0 bg-transparent border-none cursor-pointer hover:text-red-500 transition-colors"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             const updatedFeatures = about.features.filter((_, i) => i !== index);
                             setAbout(prev => ({ ...prev, features: updatedFeatures }));
                             setIsDirty(true);
                           }}
+                          aria-label="특징 항목 삭제"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -497,7 +490,7 @@ export default function Page() {
                     >
                       {isSaving ? (
                         <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <InlineSpinner />
                           저장 중...
                         </>
                       ) : (

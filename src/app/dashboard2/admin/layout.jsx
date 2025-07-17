@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth.js';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { supabase } from '@/lib/supabase/supabaseClientBrowser';
 import { toast } from 'sonner';
 
@@ -70,18 +71,10 @@ export default function AdminLayout({ children }) {
   if (authLoading || loading) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="text-center">
-          <div 
-            className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" 
-            role="status" 
-            aria-busy="true"
-          >
-            <span className="sr-only">로딩 중...</span>
-          </div>
-          <p className="mt-4 text-muted-foreground">
-            {authLoading ? '사용자 정보 확인 중...' : '대시보드 데이터를 불러오는 중...'}
-          </p>
-        </div>
+        <LoadingSpinner 
+          size="xl" 
+          text={authLoading ? '사용자 정보 확인 중...' : '대시보드 데이터를 불러오는 중...'}
+        />
       </div>
     );
   }

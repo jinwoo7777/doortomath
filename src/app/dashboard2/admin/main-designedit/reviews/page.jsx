@@ -5,11 +5,12 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { LoadingSpinner, InlineSpinner } from '@/components/ui/spinner';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Save, Plus, X, ImageOff, Star } from 'lucide-react';
+import { Save, Plus, X, ImageOff, Star } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -74,7 +75,7 @@ const ImagePreview = ({ src, alt, className = "w-8 h-8" }) => {
     <div className={`${className} bg-muted rounded-full border overflow-hidden flex items-center justify-center relative`}>
       {imageLoading && (
         <div className="absolute inset-0 bg-muted/50 flex items-center justify-center">
-          <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+          <InlineSpinner size="sm" />
         </div>
       )}
       <img
@@ -271,18 +272,7 @@ export default function Page() {
       <SidebarProvider>
         <SidebarInset>
           <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-            <div className="text-center">
-              <div 
-                className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" 
-                role="status" 
-                aria-busy="true"
-              >
-                <span className="sr-only">로딩 중...</span>
-              </div>
-              <p className="mt-4 text-muted-foreground">
-                후기 데이터를 불러오는 중...
-              </p>
-            </div>
+            <LoadingSpinner size="xl" text="후기 데이터를 불러오는 중..." />
           </div>
         </SidebarInset>
       </SidebarProvider>
@@ -364,15 +354,18 @@ export default function Page() {
                               <span className="text-xs text-muted-foreground">({review.rating}점)</span>
                             </div>
                             {content.reviews.items.length > 1 && (
-                              <Button
+                              <button
                                 type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeReview(index)}
-                                className="text-destructive hover:text-destructive"
+                                className="ml-1 p-0 bg-transparent border-none cursor-pointer hover:text-red-500 transition-colors"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  removeReview(index);
+                                }}
+                                aria-label="리뷰 삭제"
                               >
                                 <X className="h-4 w-4" />
-                              </Button>
+                              </button>
                             )}
                           </div>
                         </CardHeader>
@@ -468,7 +461,7 @@ export default function Page() {
                   >
                     {isSaving ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        <InlineSpinner />
                         저장 중...
                       </>
                     ) : (

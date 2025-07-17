@@ -419,14 +419,18 @@ export default function AnswerKeyForm({ onBack, onSave, initialData = null }) {
                     <AlertDialogHeader>
                       <div className="flex items-center justify-between">
                         <AlertDialogTitle>엑셀로 답안 일괄 등록</AlertDialogTitle>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setShowExcelDialog(false)}
-                          className="h-6 w-6"
+                        <button
+                          type="button"
+                          className="ml-1 p-0 bg-transparent border-none cursor-pointer hover:text-red-500 transition-colors"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowExcelDialog(false);
+                          }}
+                          aria-label="엑셀 업로드 대화상자 닫기"
                         >
                           <X className="h-4 w-4" />
-                        </Button>
+                        </button>
                       </div>
                     </AlertDialogHeader>
                     <ExcelUpload

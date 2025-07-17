@@ -4,6 +4,7 @@ import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import ScheduleManagementContent from '@/components/admin/dashboard/schedule-management/ScheduleManagementContent';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { AppSidebar } from "@/components/admin/shadcn-dashborard/app-sidebar";
 import {
   SidebarInset,
@@ -49,12 +50,7 @@ export default function ScheduleManagementPage() {
           </header>
           <div className="flex flex-1 flex-col gap-6 p-4 pt-0">
             <div className="flex h-[calc(100vh-8rem)] items-center justify-center">
-              <div className="text-center">
-                <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" role="status" aria-busy="true">
-                  <span className="sr-only">로딩 중...</span>
-                </div>
-                <p className="mt-4 text-muted-foreground">인증 상태를 확인하는 중...</p>
-              </div>
+              <LoadingSpinner size="xl" text="인증 상태를 확인하는 중..." />
             </div>
           </div>
         </SidebarInset>
@@ -159,7 +155,7 @@ export default function ScheduleManagementPage() {
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-6 p-4 pt-0">
-          <ScheduleManagementContent />
+          <ScheduleManagementContent branch="daechi" />
         </div>
       </SidebarInset>
     </SidebarProvider>

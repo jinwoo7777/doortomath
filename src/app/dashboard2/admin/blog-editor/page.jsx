@@ -27,6 +27,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { LoadingSpinner, InlineSpinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -1357,7 +1358,7 @@ export default function BlogEditorPage({ initialTab }) {
                 {pageLoading ? (
                   <div className="flex justify-center items-center py-8">
                     <div className="text-center">
-                      <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                      <InlineSpinner />
                       <p className="mt-2 text-sm text-muted-foreground">포스트를 불러오는 중...</p>
                     </div>
                   </div>
@@ -1621,18 +1622,7 @@ export default function BlogEditorPage({ initialTab }) {
     const loadingContent = (
       <div className="flex flex-1 flex-col gap-6 p-4 pt-0">
         <div className="flex h-[calc(100vh-8rem)] items-center justify-center">
-          <div className="text-center">
-            <div 
-              className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" 
-              role="status" 
-              aria-busy="true"
-            >
-              <span className="sr-only">로딩 중...</span>
-            </div>
-            <p className="mt-4 text-muted-foreground">
-              인증 상태를 확인하는 중...
-            </p>
-          </div>
+          <LoadingSpinner size="xl" text="인증 상태를 확인하는 중..." />
         </div>
       </div>
     );

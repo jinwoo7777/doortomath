@@ -150,10 +150,25 @@ export function BlogPostEditor({ onSaveSuccess, editingPost = null }) {
 
   // 태그 제거
   const handleRemoveTag = (tagToRemove) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
-    }));
+    console.log('태그 삭제 시도:', tagToRemove);
+    console.log('현재 태그 목록:', formData.tags);
+    
+    if (!tagToRemove || !formData.tags.includes(tagToRemove)) {
+      console.warn('삭제할 태그가 존재하지 않습니다:', tagToRemove);
+      return;
+    }
+    
+    setFormData(prev => {
+      const newTags = prev.tags.filter(tag => tag !== tagToRemove);
+      console.log('삭제 후 태그 목록:', newTags);
+      return {
+        ...prev,
+        tags: newTags
+      };
+    });
+    
+    // 사용자에게 피드백 제공
+    toast.success(`"${tagToRemove}" 태그가 삭제되었습니다.`);
   };
 
   // 태그 입력 키 핸들러
@@ -677,17 +692,31 @@ export function BlogPostEditor({ onSaveSuccess, editingPost = null }) {
                     추가
                   </Button>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {formData.tags.map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                      {tag}
-                      <X 
-                        className="h-3 w-3 cursor-pointer" 
-                        onClick={() => handleRemoveTag(tag)}
-                      />
-                    </Badge>
-                  ))}
-                </div>
+                {formData.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formData.tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary" className="flex items-center gap-1 group">
+                        <span className="flex-1">{tag}</span>
+                        <button
+                          type="button"
+                          className="ml-1 p-0 bg-transparent border-none cursor-pointer hover:text-red-500 transition-colors"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('X 버튼 클릭됨, 태그:', tag);
+                            handleRemoveTag(tag);
+                          }}
+                          aria-label={`${tag} 태그 삭제`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                {formData.tags.length === 0 && (
+                  <p className="text-sm text-muted-foreground">태그를 추가하면 여기에 표시됩니다. X 버튼을 클릭하여 삭제할 수 있습니다.</p>
+                )}
               </div>
             </CardContent>
           </Card>

@@ -8,7 +8,7 @@ import { notFound } from 'next/navigation';
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default async function CourseDetailsPage({ params }) {
-  const { courseId } = params;
+  const { courseId } = await params;
   
   // courseId가 유효한 UUID 형식인지 확인
   if (!courseId || !UUID_REGEX.test(courseId)) {

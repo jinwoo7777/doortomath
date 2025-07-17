@@ -391,14 +391,20 @@ export function CategoryManager({ categories, onCategoryUpdate }) {
             </div>
 
             <div className="flex justify-end gap-2 pt-4">
-              <Button 
-                variant="outline" 
-                onClick={() => setIsDialogOpen(false)}
+              <button
+                type="button"
+                className="ml-1 p-1 bg-transparent border-none cursor-pointer hover:text-red-500 transition-colors text-sm flex items-center gap-1"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDialogOpen(false);
+                }}
                 disabled={saving}
+                aria-label="취소"
               >
-                <X className="h-4 w-4 mr-2" />
+                <X className="h-4 w-4" />
                 취소
-              </Button>
+              </button>
               <Button onClick={handleSave} disabled={saving}>
                 <Save className="h-4 w-4 mr-2" />
                 {saving ? '저장 중...' : '저장'}

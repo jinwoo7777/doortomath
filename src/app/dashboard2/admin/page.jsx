@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { ROLES } from '@/lib/auth/constants';
 
 import { AppSidebar } from "@/components/admin/shadcn-dashborard/app-sidebar"
@@ -71,16 +72,7 @@ export default function Page() {
   if (loading || !roleLoaded || !isAuthenticated) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="text-center">
-          <div 
-            className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" 
-            role="status" 
-            aria-busy="true"
-          >
-            <span className="sr-only">로딩 중...</span>
-          </div>
-          <p className="mt-4 text-muted-foreground">사용자 정보 확인 중...</p>
-        </div>
+        <LoadingSpinner size="xl" text="사용자 정보 확인 중..." />
       </div>
     );
   }

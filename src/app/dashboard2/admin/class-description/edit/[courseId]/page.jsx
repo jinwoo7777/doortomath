@@ -7,6 +7,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { toast } from 'sonner';
 import { AdvancedCourseEditor } from '@/components/admin/dashboard/courses-design/AdvancedCourseEditor';
 import { AppSidebar } from "@/components/admin/shadcn-dashborard/app-sidebar";
+import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   SidebarInset,
   SidebarProvider,
@@ -133,7 +134,7 @@ export default function AdminCourseEditPage({ params }) {
           <div className="flex flex-1 flex-col gap-6 p-4 pt-0">
             <div className="flex justify-center items-center py-20">
               <div className="text-center">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                <LoadingSpinner text="데이터를 불러오는 중..." />
                 <p className="mt-2 text-sm text-muted-foreground">수업 정보를 불러오는 중...</p>
               </div>
             </div>

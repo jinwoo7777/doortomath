@@ -105,14 +105,36 @@ const data = {
       ],
     },
     {
-      title: "수업시간표 관리",
-      url: "/dashboard2/admin?path=/dashboard2/admin/schedule-management",
+      title: "대치 수업시간표 관리",
+      url: "/dashboard2/admin/schedule-management",
       icon: CalendarClock,
       items: [
-        { title: "전체 시간표", url: "/dashboard2/admin?path=/dashboard2/admin/schedule-management" },
-        { title: "초등부", url: "/dashboard2/admin?path=/dashboard2/admin/schedule-management&grade=초등부" },
-        { title: "중등부", url: "/dashboard2/admin?path=/dashboard2/admin/schedule-management&grade=중등부" },
-        { title: "고등부", url: "/dashboard2/admin?path=/dashboard2/admin/schedule-management&grade=고등부" },
+        { title: "전체 시간표", url: "/dashboard2/admin/schedule-management" },
+        { title: "초등부", url: "/dashboard2/admin/schedule-management?grade=초등부" },
+        { title: "중등부", url: "/dashboard2/admin/schedule-management?grade=중등부" },
+        { title: "고등부", url: "/dashboard2/admin/schedule-management?grade=고등부" },
+      ],
+    },
+    {
+      title: "북위례 수업시간표 관리",
+      url: "/dashboard2/admin/schedule-management-bukwirye",
+      icon: CalendarClock,
+      items: [
+        { title: "전체 시간표", url: "/dashboard2/admin/schedule-management-bukwirye" },
+        { title: "초등부", url: "/dashboard2/admin/schedule-management-bukwirye?grade=초등부" },
+        { title: "중등부", url: "/dashboard2/admin/schedule-management-bukwirye?grade=중등부" },
+        { title: "고등부", url: "/dashboard2/admin/schedule-management-bukwirye?grade=고등부" },
+      ],
+    },
+    {
+      title: "남위례 수업시간표 관리",
+      url: "/dashboard2/admin/schedule-management-namwirye",
+      icon: CalendarClock,
+      items: [
+        { title: "전체 시간표", url: "/dashboard2/admin/schedule-management-namwirye" },
+        { title: "초등부", url: "/dashboard2/admin/schedule-management-namwirye?grade=초등부" },
+        { title: "중등부", url: "/dashboard2/admin/schedule-management-namwirye?grade=중등부" },
+        { title: "고등부", url: "/dashboard2/admin/schedule-management-namwirye?grade=고등부" },
       ],
     },
     {

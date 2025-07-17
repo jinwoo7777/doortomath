@@ -17,7 +17,7 @@
     --primary-foreground: 210 40% 98%;
  
     --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 40% 98%;
  
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
@@ -194,6 +194,35 @@
   color: hsl(var(--foreground)) !important;
   background-color: transparent !important;
   border-radius: var(--radius) !important;
+}
+
+/* 대시보드 내 Badge 스타일 개선 - 기본 shadcn/ui 색상 시스템 사용 */
+
+/* Badge 스타일을 shadcn/ui 기본값으로 복원 */
+.dashboard-scope [data-slot="badge"],
+.dashboard-scope .badge {
+  /* shadcn/ui 기본 색상 시스템 사용 */
+}
+
+/* badge 내부 텍스트 요소들도 기본 색상 사용 */
+.dashboard-scope [data-slot="badge"] span,
+.dashboard-scope [data-slot="badge"] *:not(svg),
+.dashboard-scope .badge span,
+.dashboard-scope .badge *:not(svg) {
+  /* shadcn/ui 기본 색상 시스템 사용 */
+}
+
+/* custom style이 적용된 badge의 색상은 존중 */
+.dashboard-scope [data-slot="badge"][style*="color"],
+.dashboard-scope .badge[style*="color"] {
+  /* 인라인 스타일로 지정된 색상 사용 */
+}
+
+.dashboard-scope [data-slot="badge"][style*="color"] span,
+.dashboard-scope [data-slot="badge"][style*="color"] *:not(svg),
+.dashboard-scope .badge[style*="color"] span,
+.dashboard-scope .badge[style*="color"] *:not(svg) {
+  /* 인라인 스타일로 지정된 색상 사용 */
 }
 
 @layer base {

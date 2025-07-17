@@ -7,6 +7,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { toast } from 'sonner';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Edit, ExternalLink } from 'lucide-react';
@@ -173,7 +174,7 @@ export default function AdminBlogPreview() {
         <div className="container mx-auto py-8">
           <div className="flex justify-center items-center py-12">
             <div className="text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              <LoadingSpinner text="데이터를 불러오는 중..." />
               <p className="mt-2 text-sm text-muted-foreground">포스트를 불러오는 중...</p>
             </div>
           </div>

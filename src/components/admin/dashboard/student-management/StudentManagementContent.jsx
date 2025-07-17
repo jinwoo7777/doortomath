@@ -9,6 +9,7 @@ import * as XLSX from 'xlsx';
 import { getDayName } from '@/lib/supabase/fetchSchedules';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LoadingSpinner, InlineSpinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -89,7 +90,14 @@ const StudentManagementContent = () => {
   const [studentSchedules, setStudentSchedules] = useState([]);
   const [studentGrades, setStudentGrades] = useState([]);
   const [selectedTeacher, setSelectedTeacher] = useState('all');
+  const [selectedTeacherBranch, setSelectedTeacherBranch] = useState('all');
   const [selectedGrade, setSelectedGrade] = useState('all');
+  const [selectedBranch, setSelectedBranch] = useState('all');
+  
+  // 강사 지점 선택 변경 시 강사 선택 초기화
+  useEffect(() => {
+    setSelectedTeacher('all');
+  }, [selectedTeacherBranch]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -124,16 +132,15 @@ const StudentManagementContent = () => {
     full_name: '',
     email: '',
     phone: '',
-    parent_name: '',
     parent_phone: '',
     birth_date: '',
     school: '',
     grade: '',
     school_grade: '', // 구체적인 학년 추가
-    address: '',
     notes: '',
     is_priority: false,
-    status: 'active'
+    status: 'active',
+    branch: 'daechi'
   });
   
   
@@ -147,7 +154,39 @@ const StudentManagementContent = () => {
     notes: ''
   });
 
+  // 결제 모달 관련 state
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedStudentForPayment, setSelectedStudentForPayment] = useState(null);
+  const [paymentForm, setPaymentForm] = useState({
+    amount: '',
+    payment_date: '',
+    payment_method: 'cash',
+    period_start: '',
+    period_end: '',
+    notes: ''
+  });
+
+  // 상담 메모 모달 관련 state
+  const [isMemoModalOpen, setIsMemoModalOpen] = useState(false);
+  const [selectedStudentForMemo, setSelectedStudentForMemo] = useState(null);
+  const [consultationHistory, setConsultationHistory] = useState([]);
+  const [memoForm, setMemoForm] = useState({
+    content: '',
+    consultation_date: '',
+    type: 'general',
+    consultant: ''
+  });
+
   const supabase = createClientComponentClient();
+
+  const getBranchName = (branch) => {
+    switch(branch) {
+      case 'bukwirye': return '북위례';
+      case 'namwirye': return '남위례';
+      case 'daechi': return '대치';
+      default: return '대치';
+    }
+  };
 
   // 컴포넌트 마운트 시 날짜 초기화 (하이드레이션 오류 방지)
   useEffect(() => {
@@ -478,16 +517,15 @@ const StudentManagementContent = () => {
         full_name: studentForm.full_name.trim(),
         email: studentForm.email.trim(),
         phone: studentForm.phone.trim() || null,
-        parent_name: studentForm.parent_name.trim() || null,
         parent_phone: studentForm.parent_phone.trim() || null,
         birth_date: studentForm.birth_date || null,
         school: studentForm.school.trim() || null,
         grade: studentForm.grade || null,
         school_grade: studentForm.school_grade || null, // 구체적인 학년 추가
-        address: studentForm.address.trim() || null,
         notes: studentForm.notes.trim() || null,
         is_priority: studentForm.is_priority,
-        status: studentForm.status
+        status: studentForm.status,
+        branch: studentForm.branch
       };
 
       if (currentStudent) {
@@ -712,13 +750,11 @@ const StudentManagementContent = () => {
       full_name: '',
       email: '',
       phone: '',
-      parent_name: '',
       parent_phone: '',
       birth_date: '',
       school: '',
       grade: '',
       school_grade: '', // 구체적인 학년
-      address: '',
       notes: '',
       is_priority: false,
       status: 'active'
@@ -737,16 +773,15 @@ const StudentManagementContent = () => {
       full_name: student.full_name || '',
       email: student.email || '',
       phone: student.phone || '',
-      parent_name: student.parent_name || '',
       parent_phone: student.parent_phone || '',
       birth_date: student.birth_date || '',
       school: student.school || '',
       grade: student.grade || '',
       school_grade: student.school_grade || '', // 구체적인 학년 추가
-      address: student.address || '',
       notes: student.notes || '',
       is_priority: student.is_priority || false,
-      status: student.status || 'active'
+      status: student.status || 'active',
+      branch: student.branch || 'daechi'
     });
     setIsDialogOpen(true);
   };
@@ -773,6 +808,147 @@ const StudentManagementContent = () => {
   const closeExamScoresModal = () => {
     setIsExamScoresModalOpen(false);
     setSelectedStudentForScores(null);
+  };
+
+  const openPaymentModal = (student) => {
+    setSelectedStudentForPayment(student);
+    setPaymentForm({
+      amount: '',
+      payment_date: new Date().toISOString().split('T')[0],
+      payment_method: 'cash',
+      period_start: '',
+      period_end: '',
+      notes: ''
+    });
+    setIsPaymentModalOpen(true);
+  };
+
+  const closePaymentModal = () => {
+    setIsPaymentModalOpen(false);
+    setSelectedStudentForPayment(null);
+    setPaymentForm({
+      amount: '',
+      payment_date: '',
+      payment_method: 'cash',
+      period_start: '',
+      period_end: '',
+      notes: ''
+    });
+  };
+
+  const handlePaymentSubmit = async () => {
+    if (!paymentForm.amount || !paymentForm.payment_date) {
+      toast.error('결제 금액과 결제일을 입력해주세요.');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('payments')
+        .insert([{
+          student_id: selectedStudentForPayment.student_id,
+          amount: parseFloat(paymentForm.amount),
+          payment_date: paymentForm.payment_date,
+          payment_method: paymentForm.payment_method,
+          period_start: paymentForm.period_start || null,
+          period_end: paymentForm.period_end || null,
+          notes: paymentForm.notes,
+          status: 'completed'
+        }]);
+
+      if (error) throw error;
+
+      toast.success('결제 기록이 저장되었습니다.');
+      closePaymentModal();
+      // 필요시 데이터 새로고침
+    } catch (error) {
+      console.error('결제 기록 저장 오류:', error);
+      toast.error('결제 기록 저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  const fetchConsultationHistory = async (studentId) => {
+    try {
+      const { data, error } = await supabase
+        .from('student_consultations')
+        .select('*')
+        .eq('student_id', studentId)
+        .order('consultation_date', { ascending: false });
+
+      if (error) throw error;
+      setConsultationHistory(data || []);
+    } catch (error) {
+      console.error('상담 기록 불러오기 오류:', error);
+      setConsultationHistory([]);
+    }
+  };
+
+  const openMemoModal = async (student) => {
+    setSelectedStudentForMemo(student);
+    setMemoForm({
+      content: '',
+      consultation_date: new Date().toISOString().split('T')[0],
+      type: 'general',
+      consultant: session?.user?.email || ''
+    });
+    setIsMemoModalOpen(true);
+    
+    // 해당 학생의 상담 기록 불러오기
+    if (student.student_id || student.id) {
+      await fetchConsultationHistory(student.student_id || student.id);
+    }
+  };
+
+  const closeMemoModal = () => {
+    setIsMemoModalOpen(false);
+    setSelectedStudentForMemo(null);
+    setConsultationHistory([]);
+    setMemoForm({
+      content: '',
+      consultation_date: '',
+      type: 'general',
+      consultant: ''
+    });
+  };
+
+  const handleMemoSubmit = async () => {
+    if (!memoForm.content || !memoForm.consultation_date) {
+      toast.error('상담 내용과 상담일을 입력해주세요.');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('student_consultations')
+        .insert([{
+          student_id: selectedStudentForMemo.student_id || selectedStudentForMemo.id,
+          content: memoForm.content,
+          consultation_date: memoForm.consultation_date,
+          type: memoForm.type,
+          consultant: memoForm.consultant,
+          created_by: session?.user?.id
+        }]);
+
+      if (error) throw error;
+
+      toast.success('상담 기록이 저장되었습니다.');
+      
+      // 상담 기록 새로고침
+      if (selectedStudentForMemo.student_id || selectedStudentForMemo.id) {
+        await fetchConsultationHistory(selectedStudentForMemo.student_id || selectedStudentForMemo.id);
+      }
+      
+      // 폼 리셋
+      setMemoForm({
+        content: '',
+        consultation_date: new Date().toISOString().split('T')[0],
+        type: 'general',
+        consultant: session?.user?.email || ''
+      });
+    } catch (error) {
+      console.error('상담 기록 저장 오류:', error);
+      toast.error('상담 기록 저장 중 오류가 발생했습니다.');
+    }
   };
 
   const handleCoursesUpdate = () => {
@@ -918,6 +1094,11 @@ const StudentManagementContent = () => {
         }
       }
 
+      // 지점 검증
+      if (row['지점'] && !['대치', '북위례', '남위례'].includes(row['지점'])) {
+        rowErrors.push('지점은 대치, 북위례, 남위례 중 하나여야 합니다');
+      }
+
       if (rowErrors.length > 0) {
         errors.push({ row: rowNumber, errors: rowErrors, data: row });
       } else {
@@ -925,13 +1106,12 @@ const StudentManagementContent = () => {
           full_name: row['이름']?.toString().trim(),
           email: row['이메일']?.toString().trim(),
           phone: row['연락처']?.toString().trim() || null,
-          parent_name: row['학부모명']?.toString().trim() || null,
           parent_phone: row['학부모연락처']?.toString().trim() || null,
           birth_date: row['생년월일'] ? formatDate(row['생년월일']) : null,
           school: row['학교']?.toString().trim() || null,
           grade: row['학교급']?.toString().trim() || null,
           school_grade: row['학년']?.toString().trim() || null, // 구체적인 학년
-          address: row['주소']?.toString().trim() || null,
+          branch: row['지점']?.toString().trim() || 'daechi', // 기본값 대치
           notes: row['특이사항']?.toString().trim() || null,
           is_priority: row['관심관리'] === '예' || row['관심관리'] === 'Y' || row['관심관리'] === true,
           status: 'active'
@@ -1088,13 +1268,12 @@ const StudentManagementContent = () => {
         '이름': '홍길동',
         '이메일': 'hong@example.com',
         '연락처': '010-1234-5678',
-        '학부모명': '홍아버지',
         '학부모연락처': '010-9876-5432',
         '생년월일': '2010-01-01',
         '학교': '서울초등학교',
         '학교급': '초등부',
         '학년': '3학년',
-        '주소': '서울시 강남구',
+        '지점': '대치',
         '특이사항': '수학에 관심이 많음',
         '관심관리': '아니오'
       }
@@ -1203,12 +1382,28 @@ const StudentManagementContent = () => {
               </Select>
             </div>
 
-            {(selectedGrade !== 'all' || searchQuery) && (
+            <div className="flex items-center gap-2">
+              <Label htmlFor="branch-filter" className="min-w-fit">지점:</Label>
+              <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="전체" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  <SelectItem value="daechi">대치</SelectItem>
+                  <SelectItem value="bukwirye">북위례</SelectItem>
+                  <SelectItem value="namwirye">남위례</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {(selectedGrade !== 'all' || selectedBranch !== 'all' || searchQuery) && (
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={() => {
                   setSelectedGrade('all');
+                  setSelectedBranch('all');
                   setSearchQuery('');
                 }}
               >
@@ -1225,6 +1420,7 @@ const StudentManagementContent = () => {
           <h2 className="text-lg font-semibold">
             전체 학원생 목록
             {selectedGrade !== 'all' && ` (${selectedGrade})`}
+            {selectedBranch !== 'all' && ` (${getBranchName(selectedBranch)})`}
             {searchQuery && ` - "${searchQuery}" 검색`}
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -1232,6 +1428,9 @@ const StudentManagementContent = () => {
               let filteredStudents = students;
               if (selectedGrade !== 'all') {
                 filteredStudents = filteredStudents.filter(s => s.grade === selectedGrade);
+              }
+              if (selectedBranch !== 'all') {
+                filteredStudents = filteredStudents.filter(s => s.branch === selectedBranch);
               }
               if (searchQuery) {
                 filteredStudents = filteredStudents.filter(s => 
@@ -1265,17 +1464,15 @@ const StudentManagementContent = () => {
       <Card>
         <CardContent className="p-6">
           {loading ? (
-            <div className="flex justify-center items-center py-8">
-              <div className="text-center">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-                <p className="mt-2 text-sm text-muted-foreground">학원생 목록을 불러오는 중...</p>
-              </div>
-            </div>
+            <LoadingSpinner text="학원생 목록을 불러오는 중..." />
           ) : (() => {
             // 필터링된 학원생 목록
             let filteredStudents = students;
             if (selectedGrade !== 'all') {
               filteredStudents = filteredStudents.filter(s => s.grade === selectedGrade);
+            }
+            if (selectedBranch !== 'all') {
+              filteredStudents = filteredStudents.filter(s => s.branch === selectedBranch);
             }
             if (searchQuery) {
               filteredStudents = filteredStudents.filter(s => 
@@ -1290,17 +1487,18 @@ const StudentManagementContent = () => {
               <div className="text-center py-8">
                 <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-lg font-medium">
-                  {selectedGrade !== 'all' || searchQuery ? '조건에 맞는 학원생이 없습니다' : '등록된 학원생이 없습니다'}
+                  {selectedGrade !== 'all' || selectedBranch !== 'all' || searchQuery ? '조건에 맞는 학원생이 없습니다' : '등록된 학원생이 없습니다'}
                 </p>
                 <p className="text-muted-foreground mb-4">
-                  {selectedGrade !== 'all' || searchQuery ? '필터 조건을 변경해보세요.' : '첫 번째 학원생을 추가해보세요.'}
+                  {selectedGrade !== 'all' || selectedBranch !== 'all' || searchQuery ? '필터 조건을 변경해보세요.' : '첫 번째 학원생을 추가해보세요.'}
                 </p>
                 <div className="flex justify-center gap-2">
-                  {selectedGrade !== 'all' || searchQuery ? (
+                  {selectedGrade !== 'all' || selectedBranch !== 'all' || searchQuery ? (
                     <Button 
                       variant="outline" 
                       onClick={() => {
                         setSelectedGrade('all');
+                        setSelectedBranch('all');
                         setSearchQuery('');
                       }}
                     >
@@ -1326,6 +1524,7 @@ const StudentManagementContent = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>학원생명</TableHead>
+                      <TableHead>지점</TableHead>
                       <TableHead>학교급</TableHead>
                       <TableHead>학년</TableHead>
                       <TableHead>학교</TableHead>
@@ -1362,6 +1561,11 @@ const StudentManagementContent = () => {
                                 )}
                               </div>
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {getBranchName(student.branch)}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             {student.grade && (
@@ -1451,15 +1655,19 @@ const StudentManagementContent = () => {
                               >
                                 <Star className={`h-4 w-4 ${student.is_priority ? 'text-orange-500 fill-orange-500' : 'text-gray-400'}`} />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteStudent(student)}
-                                className="text-destructive hover:text-destructive"
+                              <button
+                                type="button"
+                                className="ml-1 p-0 bg-transparent border-none cursor-pointer hover:text-red-500 transition-colors"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleDeleteStudent(student);
+                                }}
+                                aria-label="학생 삭제"
                                 title="삭제"
                               >
                                 <X className="h-4 w-4" />
-                              </Button>
+                              </button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1475,31 +1683,49 @@ const StudentManagementContent = () => {
     </div>
   );
 
-  const renderTeacherTab = () => (
-    <div className="space-y-4">
-      {/* 강사 선택 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>강사별 학원생 관리</CardTitle>
-          <p className="text-sm text-muted-foreground">강사를 선택하여 담당 학원생들을 확인할 수 있습니다.</p>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4 mb-6">
-            <Label htmlFor="teacher-select" className="min-w-fit">담당 강사:</Label>
-            <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="강사를 선택하세요" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체 강사</SelectItem>
-                {teachers.map((teacher) => (
-                  <SelectItem key={teacher.id} value={teacher.name}>
-                    {teacher.name} ({teacher.specialization?.join(', ')})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+  const renderTeacherTab = () => {
+    const filteredTeachers = selectedTeacherBranch === 'all' 
+      ? teachers 
+      : teachers.filter(teacher => teacher.branch === selectedTeacherBranch);
+      
+    return (
+      <div className="space-y-4">
+        {/* 강사 선택 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>강사별 학원생 관리</CardTitle>
+            <p className="text-sm text-muted-foreground">강사를 선택하여 담당 학원생들을 확인할 수 있습니다.</p>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4 mb-6">
+              <Label htmlFor="teacher-branch-select" className="min-w-fit">지점:</Label>
+              <Select value={selectedTeacherBranch} onValueChange={setSelectedTeacherBranch}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="지점을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체 지점</SelectItem>
+                  <SelectItem value="daechi">대치</SelectItem>
+                  <SelectItem value="bukwirye">북위례</SelectItem>
+                  <SelectItem value="namwirye">남위례</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Label htmlFor="teacher-select" className="min-w-fit">담당 강사:</Label>
+              <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="강사를 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체 강사</SelectItem>
+                  {filteredTeachers.map((teacher) => (
+                    <SelectItem key={teacher.id} value={teacher.name}>
+                      {teacher.name} ({getBranchName(teacher.branch)}) - {teacher.specialization?.join(', ')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
           {selectedTeacher && selectedTeacher !== 'all' ? (
             <div>
@@ -1652,6 +1878,7 @@ const StudentManagementContent = () => {
       </Card>
     </div>
   );
+  };
 
   const renderGradeTab = () => {
     const gradeGroups = [
@@ -2513,6 +2740,25 @@ const StudentManagementContent = () => {
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="branch" className="text-right">
+                지점
+              </Label>
+              <Select 
+                value={studentForm.branch} 
+                onValueChange={(value) => handleSelectChange('branch', value)}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="지점 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daechi">대치</SelectItem>
+                  <SelectItem value="bukwirye">북위례</SelectItem>
+                  <SelectItem value="namwirye">남위례</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="school_grade" className="text-right">
                 학년
               </Label>
@@ -2564,20 +2810,6 @@ const StudentManagementContent = () => {
 
             {/* 학부모 정보 */}
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="parent_name" className="text-right">
-                학부모명
-              </Label>
-              <Input
-                id="parent_name"
-                name="parent_name"
-                value={studentForm.parent_name}
-                onChange={handleInputChange}
-                className="col-span-3"
-                placeholder="학부모 이름"
-              />
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="parent_phone" className="text-right">
                 학부모 연락처
               </Label>
@@ -2588,21 +2820,6 @@ const StudentManagementContent = () => {
                 onChange={handleInputChange}
                 className="col-span-3"
                 placeholder="010-1234-5678"
-              />
-            </div>
-
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label htmlFor="address" className="text-right pt-2">
-                주소
-              </Label>
-              <Textarea
-                id="address"
-                name="address"
-                value={studentForm.address}
-                onChange={handleInputChange}
-                className="col-span-3"
-                placeholder="거주지 주소"
-                rows="2"
               />
             </div>
 
@@ -2744,14 +2961,18 @@ const StudentManagementContent = () => {
                       <AlertTitle>업로드된 파일</AlertTitle>
                       <AlertDescription className="flex items-center justify-between">
                         <span>{excelFile.name}</span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={resetExcelUpload}
-                          className="text-red-600 hover:text-red-700"
+                        <button
+                          type="button"
+                          className="ml-1 p-0 bg-transparent border-none cursor-pointer hover:text-red-500 transition-colors"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            resetExcelUpload();
+                          }}
+                          aria-label="업로드 파일 제거"
                         >
                           <X className="h-4 w-4" />
-                        </Button>
+                        </button>
                       </AlertDescription>
                     </Alert>
                   )}
@@ -2812,7 +3033,7 @@ const StudentManagementContent = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    <InlineSpinner />
                     처리 중...
                   </CardTitle>
                 </CardHeader>
@@ -3152,7 +3373,7 @@ const StudentManagementContent = () => {
                     <div key={index} className="p-3 bg-gray-50 rounded">
                       <div className="flex justify-between items-start">
                         <div className="text-sm text-gray-600">
-                          {new Date(record.date).toLocaleDateString('ko-KR')} - {record.consultant}
+                          {new Date(record.consultation_date).toLocaleDateString('ko-KR')} - {record.consultant}
                         </div>
                         <Badge variant="outline">{record.type}</Badge>
                       </div>
@@ -3171,6 +3392,7 @@ const StudentManagementContent = () => {
                   <SelectValue placeholder="상담 유형 선택" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="general">일반 상담</SelectItem>
                   <SelectItem value="payment_reminder">결제 독촉</SelectItem>
                   <SelectItem value="phone_call">전화 상담</SelectItem>
                   <SelectItem value="in_person">방문 상담</SelectItem>
