@@ -347,10 +347,10 @@ const SalesByClassView = () => {
               </div>
             </div>
             <Select value={gradeFilter} onValueChange={setGradeFilter}>
-              <SelectTrigger className="w-full sm:w-40">
+              <SelectTrigger className="w-full sm:w-40 shrink-0">
                 <SelectValue placeholder="학년 선택" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" sideOffset={4} className="z-[100]">
                 <SelectItem value="all">전체 학년</SelectItem>
                 <SelectItem value="초등부">초등부</SelectItem>
                 <SelectItem value="중등부">중등부</SelectItem>
@@ -358,10 +358,10 @@ const SalesByClassView = () => {
               </SelectContent>
             </Select>
             <Select value={teacherFilter} onValueChange={setTeacherFilter}>
-              <SelectTrigger className="w-full sm:w-40">
+              <SelectTrigger className="w-full sm:w-40 shrink-0">
                 <SelectValue placeholder="강사 선택" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" sideOffset={4} className="z-[100]">
                 <SelectItem value="all">전체 강사</SelectItem>
                 {teachers.map(teacher => (
                   <SelectItem key={teacher} value={teacher}>{teacher}</SelectItem>

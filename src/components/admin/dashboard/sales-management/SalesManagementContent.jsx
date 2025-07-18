@@ -45,41 +45,43 @@ const SalesManagementContent = () => {
 
   return (
     <BranchProvider>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="space-y-6 w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h1 className="text-2xl font-bold">매출 관리</h1>
           <BranchSelector />
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid grid-cols-2 md:grid-cols-5 gap-2">
-            <TabsTrigger value="overview">매출 개요</TabsTrigger>
-            <TabsTrigger value="overdue">연체 관리</TabsTrigger>
-            <TabsTrigger value="paid">입금 관리</TabsTrigger>
-            <TabsTrigger value="by-class">수업별 매출</TabsTrigger>
-            <TabsTrigger value="by-instructor">강사별 매출</TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="overview">매출 개요</TabsTrigger>
+              <TabsTrigger value="overdue">연체 관리</TabsTrigger>
+              <TabsTrigger value="paid">입금 관리</TabsTrigger>
+              <TabsTrigger value="by-class">수업별 매출</TabsTrigger>
+              <TabsTrigger value="by-instructor">강사별 매출</TabsTrigger>
+            </TabsList>
+          </div>
 
-        <TabsContent value="overview" className="space-y-4">
-          <SalesOverviewView />
-        </TabsContent>
+          <TabsContent value="overview" className="space-y-4">
+            <SalesOverviewView />
+          </TabsContent>
 
-        <TabsContent value="overdue" className="space-y-4">
-          <OverduePaymentsView />
-        </TabsContent>
+          <TabsContent value="overdue" className="space-y-4">
+            <OverduePaymentsView />
+          </TabsContent>
 
-        <TabsContent value="paid" className="space-y-4">
-          <PaidPaymentsView />
-        </TabsContent>
+          <TabsContent value="paid" className="space-y-4">
+            <PaidPaymentsView />
+          </TabsContent>
 
-        <TabsContent value="by-class" className="space-y-4">
-          <SalesByClassView />
-        </TabsContent>
+          <TabsContent value="by-class" className="space-y-4">
+            <SalesByClassView />
+          </TabsContent>
 
-        <TabsContent value="by-instructor" className="space-y-4">
-          <SalesByInstructorView />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="by-instructor" className="space-y-4">
+            <SalesByInstructorView />
+          </TabsContent>
+        </Tabs>
       </div>
     </BranchProvider>
   );

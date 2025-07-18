@@ -19,13 +19,13 @@ const BranchSelector = () => {
   const { selectedBranch, setSelectedBranch, branches } = useBranch();
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 shrink-0">
       <Building2 className="h-4 w-4 text-muted-foreground" />
       <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger className="w-[180px] shrink-0">
           <SelectValue placeholder="지점 선택" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent position="popper" sideOffset={4} className="z-[100]">
           {branches.map(branch => (
             <SelectItem key={branch.id} value={branch.id}>
               {branch.name}

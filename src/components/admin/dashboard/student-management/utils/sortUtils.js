@@ -12,14 +12,29 @@
 export const getNestedValue = (obj, path, defaultValue = null) => {
   if (!obj || !path) return defaultValue;
   
-  const keys = path.split('.');
+  // 배열 인덱스 접근 지원 (예: 'schedules[0].subject')
+  const keys = path.split('.')
+    .map(key => {
+      const match = key.match(/^([^\[]+)(?:\[(\d+)\])?$/);
+      return match ? { key: match[1], index: match[2] !== undefined ? parseInt(match[2]) : null } : { key };
+    });
+  
   let value = obj;
   
-  for (const key of keys) {
+  for (const { key, index } of keys) {
     if (value === null || value === undefined || !Object.prototype.hasOwnProperty.call(value, key)) {
       return defaultValue;
     }
+    
     value = value[key];
+    
+    // 배열 인덱스가 있는 경우 처리
+    if (index !== null) {
+      if (!Array.isArray(value) || value.length <= index) {
+        return defaultValue;
+      }
+      value = value[index];
+    }
   }
   
   return value === null || value === undefined ? defaultValue : value;

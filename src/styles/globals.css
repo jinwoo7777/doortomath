@@ -1,6 +1,331 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ===== 레이아웃 시프트 완전 방지 시스템 ===== */
+
+/* 1. 전체 대시보드 컨테이너 고정 */
+.dashboard-scope {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+  position: relative !important;
+}
+
+/* 2. 모든 Radix UI 컴포넌트 애니메이션 완전 차단 */
+.dashboard-scope [data-radix-select-content],
+.dashboard-scope [data-radix-tabs-content],
+.dashboard-scope [data-radix-dropdown-menu-content],
+.dashboard-scope [data-radix-popover-content],
+.dashboard-scope [data-radix-select-viewport],
+.dashboard-scope [data-radix-tabs-list],
+.dashboard-scope [data-radix-tabs-trigger] {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+}
+
+/* 3. SidebarInset 내 모든 요소 크기 고정 */
+[data-sidebar="inset"] {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  flex: 1 !important;
+  overflow: hidden !important;
+  position: relative !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+}
+
+[data-sidebar="inset"] > * {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+/* SidebarProvider 전체 레이아웃 고정 */
+[data-sidebar="provider"] {
+  width: 100% !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+
+/* Header 높이 완전 고정 */
+[data-sidebar="inset"] header {
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+  flex-shrink: 0 !important;
+}
+
+/* 메인 컨텐츠 영역 고정 */
+[data-sidebar="inset"] > div:last-child {
+  height: calc(100vh - 64px) !important;
+  max-height: calc(100vh - 64px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  flex: 1 !important;
+}
+
+/* 4. 탭 시스템 완전 고정 */
+.dashboard-scope [data-radix-tabs-root] {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.dashboard-scope [data-radix-tabs-list] {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  display: grid !important;
+  grid-template-columns: repeat(5, 1fr) !important;
+  gap: 0 !important;
+  padding: 4px !important;
+  background-color: hsl(var(--muted)) !important;
+  border-radius: 8px !important;
+  flex-shrink: 0 !important;
+}
+
+.dashboard-scope [data-radix-tabs-trigger] {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  flex-shrink: 0 !important;
+  padding: 8px 12px !important;
+  text-align: center !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: hsl(var(--muted-foreground)) !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+}
+
+.dashboard-scope [data-radix-tabs-trigger][data-state="active"] {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.dashboard-scope [data-radix-tabs-content] {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin-top: 24px !important;
+  outline: none !important;
+  min-height: 1400px !important;
+  overflow-y: auto !important;
+}
+
+/* 5. Select 드롭다운 완전 고정 */
+.dashboard-scope [data-radix-select-trigger] {
+  width: auto !important;
+  min-width: max-content !important;
+  flex-shrink: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  white-space: nowrap !important;
+  border-radius: 6px !important;
+  border: 1px solid hsl(var(--border)) !important;
+  background-color: transparent !important;
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+  height: 40px !important;
+  cursor: pointer !important;
+}
+
+.dashboard-scope [data-radix-select-content] {
+  position: fixed !important;
+  z-index: 10000 !important;
+  min-width: var(--radix-select-trigger-width) !important;
+  max-height: var(--radix-select-content-available-height) !important;
+  background-color: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 38px -10px rgba(22, 23, 24, 0.35), 0 10px 20px -15px rgba(22, 23, 24, 0.2) !important;
+  overflow: hidden !important;
+  padding: 4px !important;
+}
+
+.dashboard-scope [data-radix-select-viewport] {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 4px !important;
+}
+
+.dashboard-scope [data-radix-select-item] {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 8px 12px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  background: transparent !important;
+  color: hsl(var(--popover-foreground)) !important;
+}
+
+.dashboard-scope [data-radix-select-item]:hover,
+.dashboard-scope [data-radix-select-item][data-highlighted] {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+/* 6. 카드 및 컨테이너 크기 고정 */
+.dashboard-scope .card,
+.dashboard-scope [data-card] {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+/* 7. 그리드 시스템 안정화 */
+.dashboard-scope .grid {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+/* 8. 플렉스 컨테이너 안정화 */
+.dashboard-scope .flex {
+  min-width: 0 !important;
+}
+
+/* 9. 모든 텍스트 요소 오버플로우 처리 */
+.dashboard-scope h1,
+.dashboard-scope h2,
+.dashboard-scope h3,
+.dashboard-scope h4,
+.dashboard-scope h5,
+.dashboard-scope h6,
+.dashboard-scope p,
+.dashboard-scope span,
+.dashboard-scope div {
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+/* 10. 스크롤바 숨김 (필요시) */
+.dashboard-scope [data-radix-tabs-list]::-webkit-scrollbar,
+.dashboard-scope .overflow-x-auto::-webkit-scrollbar {
+  display: none !important;
+}
+
+.dashboard-scope [data-radix-tabs-list],
+.dashboard-scope .overflow-x-auto {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+/* 11. 최종 레이아웃 시프트 방지 - 모든 동적 요소 차단 */
+* {
+  transition: none !important;
+  animation: none !important;
+}
+
+[data-sidebar="provider"] * {
+  transition: none !important;
+  animation: none !important;
+}
+
+.dashboard-scope * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* 12. 모든 Radix 컴포넌트 강제 고정 */
+[data-radix-root],
+[data-radix-tabs-root],
+[data-radix-tabs-list],
+[data-radix-tabs-trigger],
+[data-radix-tabs-content],
+[data-radix-select-root],
+[data-radix-select-trigger],
+[data-radix-select-content] {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+/* 13. Body와 HTML 레이아웃 고정 */
+html {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+body {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  min-height: 100vh !important;
+  position: relative !important;
+}
+
+/* 강력한 레이아웃 고정 - 사이즈 변경 방지 */
+.dashboard-scope {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+}
+
+.dashboard-scope [data-radix-tabs-root] {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+}
+
+.dashboard-scope [data-radix-tabs-list] {
+  width: 100% !important;
+  max-width: none !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.dashboard-scope [data-radix-tabs-list]::-webkit-scrollbar {
+  display: none !important;
+}
+
+.dashboard-scope [data-radix-tabs-trigger] {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  min-width: max-content !important;
+}
+
+.dashboard-scope [data-radix-tabs-content] {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin-top: 1.5rem !important;
+}
+
+.dashboard-scope [data-radix-select-content] {
+  position: fixed !important;
+  z-index: 9999 !important;
+  min-width: var(--radix-select-trigger-width) !important;
+  max-height: var(--radix-select-content-available-height) !important;
+}
+
+.dashboard-scope [data-radix-select-trigger] {
+  width: auto !important;
+  min-width: max-content !important;
+  flex-shrink: 0 !important;
+}
  
 @layer base {
   :root {

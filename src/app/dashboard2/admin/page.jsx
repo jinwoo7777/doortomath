@@ -357,7 +357,7 @@ export default function Page() {
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0 dashboard-scope">
           {/* 여기에 동적으로 로드될 페이지 컨텐츠가 들어갑니다 */}
           
           {/* 대시보드 메인 페이지 */}

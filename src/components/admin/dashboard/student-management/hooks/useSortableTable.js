@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getNestedValue, compareValues } from '../utils/sortUtils';
 
 /**
@@ -62,14 +62,22 @@ const useSortableTable = (
   /**
    * 데이터 정렬 함수
    * @param {Array} data - 정렬할 데이터 배열
+   * @param {Object} options - 정렬 옵션
+   * @param {Function} options.customSortFn - 커스텀 정렬 함수 (특정 컬럼에 대한 특별한 정렬 로직)
    * @returns {Array} 정렬된 데이터 배열
    */
-  const sortData = useCallback((data) => {
+  const sortData = useCallback((data, options = {}) => {
     const { column, direction } = sortState;
+    const { customSortFn } = options;
     
     // 정렬 컬럼이 없거나 방향이 없으면 원본 데이터 반환
     if (!column || !direction || !data || data.length === 0) {
       return data;
+    }
+
+    // 커스텀 정렬 함수가 있고 현재 컬럼에 적용 가능한 경우 사용
+    if (customSortFn && typeof customSortFn === 'function') {
+      return customSortFn(data, column, direction);
     }
 
     // 데이터 복사 후 정렬
@@ -81,11 +89,31 @@ const useSortableTable = (
     });
   }, [sortState]);
 
+  // 정렬 상태 리셋 함수
+  const resetSort = useCallback(() => {
+    setSortState({ column: defaultSortColumn, direction: defaultSortDirection });
+  }, [defaultSortColumn, defaultSortDirection]);
+
+  // 특정 컬럼으로 정렬 설정 함수
+  const setSort = useCallback((column, direction = 'asc') => {
+    setSortState({ column, direction });
+  }, []);
+
+  // 현재 정렬 상태 메모이제이션
+  const sortInfo = useMemo(() => ({
+    column: sortState.column,
+    direction: sortState.direction,
+    isActive: !!sortState.column && !!sortState.direction
+  }), [sortState]);
+
   return {
     sortColumn: sortState.column,
     sortDirection: sortState.direction,
+    sortInfo,
     handleSort,
-    sortData
+    sortData,
+    resetSort,
+    setSort
   };
 };
 

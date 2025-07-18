@@ -12,6 +12,7 @@ import useStudentData from './hooks/useStudentData';
 import useStudentForm from './hooks/useStudentForm';
 import useStudentStats from './hooks/useStudentStats';
 import useSortableTable from './hooks/useSortableTable';
+import { getNestedValue, compareValues } from './utils/sortUtils';
 
 // 컴포넌트 가져오기
 import StudentForm from './components/StudentForm';
@@ -169,9 +170,36 @@ const StudentManagementContent = () => {
     const filteredData = getFilteredStudents();
     // 2. 정보 추가
     const enrichedData = getEnrichedStudents(filteredData);
-    // 3. 정렬
-    return sortData(enrichedData);
-  }, [students, searchQuery, selectedGrade, selectedBranch, selectedTeacher, activeTab, sortColumn, sortDirection]);
+    // 3. 정렬 (특별한 정렬 로직 적용)
+    return sortData(enrichedData, {
+      customSortFn: (data, column, direction) => {
+        // 특별한 정렬 로직이 필요한 컬럼에 대한 처리
+        if (column === 'average_grade') {
+          // 성적 정렬 시 null 값은 항상 마지막에 배치
+          return [...data].sort((a, b) => {
+            const gradeA = getStudentGradeAverage(a.id);
+            const gradeB = getStudentGradeAverage(b.id);
+
+            // null 값 처리
+            if (gradeA === null && gradeB === null) return 0;
+            if (gradeA === null) return 1; // null 값은 항상 마지막에
+            if (gradeB === null) return -1;
+
+            // 숫자 비교
+            return direction === 'asc' ? gradeA - gradeB : gradeB - gradeA;
+          });
+        }
+
+        // 기본 정렬 로직 사용
+        return [...data].sort((a, b) => {
+          const valueA = getNestedValue(a, column);
+          const valueB = getNestedValue(b, column);
+
+          return compareValues(valueA, valueB, direction);
+        });
+      }
+    });
+  }, [students, searchQuery, selectedGrade, selectedBranch, selectedTeacher, activeTab, sortColumn, sortDirection, getStudentGradeAverage]);
 
   // 모달 관련 함수
   const openCoursesModal = (student) => {
@@ -242,172 +270,114 @@ const StudentManagementContent = () => {
       <StudentStats stats={stats} />
 
       {/* 학생 관리 탭 */}
-      <StudentTabs activeTab={activeTab} setActiveTab={setActiveTab}>
-        <TabsContent value="all" className="space-y-4">
-          <StudentFilters
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            selectedGrade={selectedGrade}
-            setSelectedGrade={setSelectedGrade}
-            selectedBranch={selectedBranch}
-            setSelectedBranch={setSelectedBranch}
-            selectedTeacher={selectedTeacher}
-            setSelectedTeacher={setSelectedTeacher}
-            teachers={teachers}
-          />
-          <StudentList
-            students={students}
-            filteredStudents={filteredStudents}
-            loading={loading}
-            onEdit={openEditDialog}
-            onDelete={handleDeleteStudent}
-            onTogglePriority={handleTogglePriority}
-            onViewCourses={openCoursesModal}
-            onViewExamScores={handleViewExamScores}
-            onOpenMemo={openMemoModal}
-            onOpenPayment={openPaymentModal}
-            onOpenEnrollment={openEnrollmentModal}
-            getStudentSchedules={getStudentSchedules}
-            getStudentGradeAverage={getStudentGradeAverage}
-            session={session}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-          />
-        </TabsContent>
+      <div className="relative">
+        <StudentTabs activeTab={activeTab} setActiveTab={setActiveTab}>
+          <TabsContent value="all" className="space-y-4 min-h-[600px]">
+            <StudentFilters
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              selectedGrade={selectedGrade}
+              setSelectedGrade={setSelectedGrade}
+              selectedBranch={selectedBranch}
+              setSelectedBranch={setSelectedBranch}
+              selectedTeacher={selectedTeacher}
+              setSelectedTeacher={setSelectedTeacher}
+              teachers={teachers}
+            />
+            <div className="relative">
+              <StudentList
+                students={students}
+                filteredStudents={filteredStudents}
+                loading={loading}
+                onEdit={openEditDialog}
+                onDelete={handleDeleteStudent}
+                onTogglePriority={handleTogglePriority}
+                onViewCourses={openCoursesModal}
+                onViewExamScores={handleViewExamScores}
+                onOpenMemo={openMemoModal}
+                onOpenPayment={openPaymentModal}
+                onOpenEnrollment={openEnrollmentModal}
+                getStudentSchedules={getStudentSchedules}
+                getStudentGradeAverage={getStudentGradeAverage}
+                session={session}
+                sortColumn={sortColumn}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+            </div>
+          </TabsContent>
 
-        <TabsContent value="by-teacher" className="space-y-4">
-          <StudentFilters
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            selectedGrade={selectedGrade}
-            setSelectedGrade={setSelectedGrade}
-            selectedBranch={selectedBranch}
-            setSelectedBranch={setSelectedBranch}
-            selectedTeacher={selectedTeacher}
-            setSelectedTeacher={setSelectedTeacher}
-            teachers={teachers}
-          />
-          <StudentList
-            students={students}
-            filteredStudents={filteredStudents}
-            loading={loading}
-            onEdit={openEditDialog}
-            onDelete={handleDeleteStudent}
-            onTogglePriority={handleTogglePriority}
-            onViewCourses={openCoursesModal}
-            onViewExamScores={handleViewExamScores}
-            onOpenMemo={openMemoModal}
-            onOpenPayment={openPaymentModal}
-            onOpenEnrollment={openEnrollmentModal}
-            getStudentSchedules={getStudentSchedules}
-            getStudentGradeAverage={getStudentGradeAverage}
-            session={session}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-          />
-        </TabsContent>
+          <TabsContent value="by-score" className="space-y-4 min-h-[600px]">
+            <StudentFilters
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              selectedGrade={selectedGrade}
+              setSelectedGrade={setSelectedGrade}
+              selectedBranch={selectedBranch}
+              setSelectedBranch={setSelectedBranch}
+              selectedTeacher={selectedTeacher}
+              setSelectedTeacher={setSelectedTeacher}
+              teachers={teachers}
+            />
+            <div className="relative">
+              <StudentList
+                students={students}
+                filteredStudents={filteredStudents}
+                loading={loading}
+                onEdit={openEditDialog}
+                onDelete={handleDeleteStudent}
+                onTogglePriority={handleTogglePriority}
+                onViewCourses={openCoursesModal}
+                onViewExamScores={handleViewExamScores}
+                onOpenMemo={openMemoModal}
+                onOpenPayment={openPaymentModal}
+                onOpenEnrollment={openEnrollmentModal}
+                getStudentSchedules={getStudentSchedules}
+                getStudentGradeAverage={getStudentGradeAverage}
+                session={session}
+                sortColumn={sortColumn}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+            </div>
+          </TabsContent>
 
-        <TabsContent value="by-grade" className="space-y-4">
-          <StudentFilters
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            selectedGrade={selectedGrade}
-            setSelectedGrade={setSelectedGrade}
-            selectedBranch={selectedBranch}
-            setSelectedBranch={setSelectedBranch}
-            selectedTeacher={selectedTeacher}
-            setSelectedTeacher={setSelectedTeacher}
-            teachers={teachers}
-          />
-          <StudentList
-            students={students}
-            filteredStudents={filteredStudents}
-            loading={loading}
-            onEdit={openEditDialog}
-            onDelete={handleDeleteStudent}
-            onTogglePriority={handleTogglePriority}
-            onViewCourses={openCoursesModal}
-            onViewExamScores={handleViewExamScores}
-            onOpenMemo={openMemoModal}
-            onOpenPayment={openPaymentModal}
-            onOpenEnrollment={openEnrollmentModal}
-            getStudentSchedules={getStudentSchedules}
-            getStudentGradeAverage={getStudentGradeAverage}
-            session={session}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-          />
-        </TabsContent>
-
-        <TabsContent value="by-score" className="space-y-4">
-          <StudentFilters
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            selectedGrade={selectedGrade}
-            setSelectedGrade={setSelectedGrade}
-            selectedBranch={selectedBranch}
-            setSelectedBranch={setSelectedBranch}
-            selectedTeacher={selectedTeacher}
-            setSelectedTeacher={setSelectedTeacher}
-            teachers={teachers}
-          />
-          <StudentList
-            students={students}
-            filteredStudents={filteredStudents}
-            loading={loading}
-            onEdit={openEditDialog}
-            onDelete={handleDeleteStudent}
-            onTogglePriority={handleTogglePriority}
-            onViewCourses={openCoursesModal}
-            onViewExamScores={handleViewExamScores}
-            onOpenMemo={openMemoModal}
-            onOpenPayment={openPaymentModal}
-            onOpenEnrollment={openEnrollmentModal}
-            getStudentSchedules={getStudentSchedules}
-            getStudentGradeAverage={getStudentGradeAverage}
-            session={session}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-          />
-        </TabsContent>
-
-        <TabsContent value="priority" className="space-y-4">
-          <StudentFilters
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            selectedGrade={selectedGrade}
-            setSelectedGrade={setSelectedGrade}
-            selectedBranch={selectedBranch}
-            setSelectedBranch={setSelectedBranch}
-            selectedTeacher={selectedTeacher}
-            setSelectedTeacher={setSelectedTeacher}
-            teachers={teachers}
-          />
-          <StudentList
-            students={students}
-            filteredStudents={filteredStudents}
-            loading={loading}
-            onEdit={openEditDialog}
-            onDelete={handleDeleteStudent}
-            onTogglePriority={handleTogglePriority}
-            onViewCourses={openCoursesModal}
-            onViewExamScores={handleViewExamScores}
-            onOpenMemo={openMemoModal}
-            onOpenPayment={openPaymentModal}
-            onOpenEnrollment={openEnrollmentModal}
-            getStudentSchedules={getStudentSchedules}
-            getStudentGradeAverage={getStudentGradeAverage}
-            session={session}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-          />
-        </TabsContent>
-      </StudentTabs>
+          <TabsContent value="priority" className="space-y-4 min-h-[500px]">
+            <StudentFilters
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              selectedGrade={selectedGrade}
+              setSelectedGrade={setSelectedGrade}
+              selectedBranch={selectedBranch}
+              setSelectedBranch={setSelectedBranch}
+              selectedTeacher={selectedTeacher}
+              setSelectedTeacher={setSelectedTeacher}
+              teachers={teachers}
+            />
+            <div className="relative">
+              <StudentList
+                students={students}
+                filteredStudents={filteredStudents}
+                loading={loading}
+                onEdit={openEditDialog}
+                onDelete={handleDeleteStudent}
+                onTogglePriority={handleTogglePriority}
+                onViewCourses={openCoursesModal}
+                onViewExamScores={handleViewExamScores}
+                onOpenMemo={openMemoModal}
+                onOpenPayment={openPaymentModal}
+                onOpenEnrollment={openEnrollmentModal}
+                getStudentSchedules={getStudentSchedules}
+                getStudentGradeAverage={getStudentGradeAverage}
+                session={session}
+                sortColumn={sortColumn}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+            </div>
+          </TabsContent>
+        </StudentTabs>
+      </div>
 
       {/* 학생 추가/수정 모달 */}
       <StudentForm

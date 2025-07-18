@@ -39,10 +39,10 @@ const SalesOverviewView = () => {
           <p className="text-gray-600">학원 매출 현황 및 분석을 확인할 수 있습니다.</p>
         </div>
         <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-40 shrink-0">
             <SelectValue placeholder="기간 선택" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper" sideOffset={4} className="z-[100]">
             <SelectItem value="current_month">이번 달</SelectItem>
             <SelectItem value="last_month">지난 달</SelectItem>
             <SelectItem value="current_year">올해</SelectItem>
