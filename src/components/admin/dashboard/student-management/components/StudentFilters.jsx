@@ -1,9 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from 'lucide-react';
+import { SearchInput } from "@/components/ui/search-input";
 
 /**
  * 학생 목록 필터링 컴포넌트
@@ -21,13 +20,11 @@ const StudentFilters = ({
 }) => {
   return (
     <div className="flex flex-col md:flex-row gap-4 mb-6 layout-shift-fix">
-      <div className="relative flex-1">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
+      <div className="flex-1">
+        <SearchInput
           placeholder="학생 이름, 이메일, 학교 검색..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-8 h-10"
         />
       </div>
       

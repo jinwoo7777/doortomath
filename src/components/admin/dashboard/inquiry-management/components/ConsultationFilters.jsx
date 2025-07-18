@@ -1,6 +1,5 @@
 import React from 'react';
-import { Search } from 'lucide-react';
-import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/ui/search-input";
 import { 
   Select,
   SelectContent,
@@ -22,13 +21,11 @@ const ConsultationFilters = ({
         문의 목록 ({totalCount}건)
       </div>
       <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-        <div className="relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-          <Input
+        <div className="w-full sm:w-64">
+          <SearchInput
             placeholder="이름, 전화번호, 이메일 검색..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 w-full sm:w-64"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>

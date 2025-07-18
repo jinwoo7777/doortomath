@@ -1,10 +1,9 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Search } from 'lucide-react';
+import { SearchInput } from '@/components/ui/search-input';
 
 /**
  * 시험 응시 현황 필터 컴포넌트
@@ -29,16 +28,12 @@ const ExamStatusFilters = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="search">학생 검색</Label>
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="search"
-                placeholder="이름 또는 학번으로 검색"
-                value={searchTerm}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-8"
-              />
-            </div>
+            <SearchInput
+              id="search"
+              placeholder="이름 또는 학번으로 검색"
+              value={searchTerm}
+              onChange={(e) => onSearchChange(e.target.value)}
+            />
           </div>
           
           <div className="space-y-2">

@@ -76,6 +76,7 @@
   max-width: none !important;
   display: flex !important;
   flex-direction: column !important;
+  position: relative !important;
 }
 
 .dashboard-scope [data-radix-tabs-list] {
@@ -89,6 +90,11 @@
   background-color: hsl(var(--muted)) !important;
   border-radius: 8px !important;
   flex-shrink: 0 !important;
+  position: relative !important;
+  z-index: 1 !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
 }
 
 .dashboard-scope [data-radix-tabs-trigger] {
@@ -108,6 +114,9 @@
   background: transparent !important;
   border: none !important;
   cursor: pointer !important;
+  height: 40px !important;
+  line-height: 1.2 !important;
+  position: relative !important;
 }
 
 .dashboard-scope [data-radix-tabs-trigger][data-state="active"] {
@@ -122,8 +131,11 @@
   max-width: none !important;
   margin-top: 24px !important;
   outline: none !important;
-  min-height: 1400px !important;
-  overflow-y: auto !important;
+  min-height: 800px !important;
+  max-height: none !important;
+  overflow-y: visible !important;
+  position: relative !important;
+  flex: 1 !important;
 }
 
 /* 5. Select 드롭다운 완전 고정 */
@@ -185,11 +197,17 @@
 }
 
 /* 6. 카드 및 컨테이너 크기 고정 */
-.dashboard-scope .card,
-.dashboard-scope [data-card] {
+.dashboard-scope [data-slot="card"] {
+  display: flex !important;
+  flex-direction: column !important;
   width: 100% !important;
   min-width: 0 !important;
   max-width: none !important;
+  background-color: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1) !important;
+  color: hsl(var(--card-foreground)) !important;
 }
 
 /* 7. 그리드 시스템 안정화 */
@@ -230,20 +248,28 @@
   -ms-overflow-style: none !important;
 }
 
-/* 11. 최종 레이아웃 시프트 방지 - 모든 동적 요소 차단 */
-* {
+/* 11. 레이아웃 시프트 방지 - 완전한 차단 */
+.dashboard-scope [data-radix-tabs-trigger],
+.dashboard-scope [data-radix-tabs-content],
+.dashboard-scope [data-radix-tabs-list],
+.dashboard-scope [data-radix-tabs-root] {
   transition: none !important;
   animation: none !important;
+  transform: none !important;
 }
 
-[data-sidebar="provider"] * {
+.dashboard-scope [data-radix-select-trigger],
+.dashboard-scope [data-radix-select-content],
+.dashboard-scope [data-radix-select-viewport],
+.dashboard-scope [data-radix-select-item] {
   transition: none !important;
   animation: none !important;
+  transform: none !important;
 }
 
-.dashboard-scope * {
-  transition: none !important;
-  animation: none !important;
+/* 사이드바 레이아웃 변화만 차단 */
+[data-sidebar] {
+  transition: width 0s, left 0s, right 0s !important;
 }
 
 /* 12. 모든 Radix 컴포넌트 강제 고정 */
@@ -434,9 +460,34 @@ body {
   -moz-osx-font-smoothing: grayscale !important;
 }
 
-.dashboard-scope table,
-.dashboard-scope tr,
-.dashboard-scope td,
+/* 테이블 스타일 - 데이터 테이블만 적용 */
+.dashboard-scope .data-table table,
+.dashboard-scope table.data-table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+}
+
+.dashboard-scope .data-table th,
+.dashboard-scope .data-table td,
+.dashboard-scope table.data-table th,
+.dashboard-scope table.data-table td {
+  border: 1px solid hsl(var(--border)) !important;
+  padding: 8px 12px !important;
+  text-align: left !important;
+}
+
+.dashboard-scope .data-table th,
+.dashboard-scope table.data-table th {
+  background-color: hsl(var(--muted)) !important;
+  font-weight: 600 !important;
+}
+
+.dashboard-scope .data-table tr:nth-child(even),
+.dashboard-scope table.data-table tr:nth-child(even) {
+  background-color: hsl(var(--muted) / 0.3) !important;
+}
+
+/* 기타 요소들 */
 .dashboard-scope div,
 .dashboard-scope span {
   border: none !important;
@@ -475,8 +526,11 @@ body {
 /* Date Picker 달력 테이블 요소의 불필요한 선 제거 */
 .dashboard-scope .group\/calendar table,
 .dashboard-scope .group\/calendar tr,
-.dashboard-scope .group\/calendar td {
+.dashboard-scope .group\/calendar td,
+.dashboard-scope .group\/calendar th {
   border: none !important;
+  background: none !important;
+  padding: 0 !important;
 }
 
 /* 대시보드 내 버튼 스타일 충돌 방지 */
@@ -517,8 +571,30 @@ body {
   font-family: var(--font-sans) !important;
   line-height: 1.5 !important;
   color: hsl(var(--foreground)) !important;
-  background-color: transparent !important;
+  background-color: hsl(var(--background)) !important;
   border-radius: var(--radius) !important;
+}
+
+/* 인풋 필드 기본 스타일 정리 */
+.dashboard-scope input {
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+/* placeholder 텍스트 스타일 */
+.dashboard-scope input::placeholder {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* SearchInput 컴포넌트 보호 */
+.dashboard-scope input[style*="paddingLeft: 40px"] {
+  padding-left: 40px !important;
+  box-sizing: border-box !important;
+}
+
+/* SearchInput 아이콘 보호 */
+.dashboard-scope svg[style*="position: absolute"] {
+  position: absolute !important;
+  pointer-events: none !important;
 }
 
 /* 대시보드 내 Badge 스타일 개선 - 기본 shadcn/ui 색상 시스템 사용 */

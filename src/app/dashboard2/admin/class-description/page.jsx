@@ -11,8 +11,9 @@ import { LoadingSpinner, InlineSpinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Plus, BookOpen, Settings, List, Eye, Edit, Trash2, Search, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, BookOpen, Settings, List, Eye, Edit, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { SearchInput } from '@/components/ui/search-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -516,15 +517,11 @@ export default function ClassDescriptionPage({ initialTab }) {
                 {/* 필터링 및 검색 */}
                 <div className="flex flex-col md:flex-row gap-4 pt-4">
                   <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="제목이나 설명으로 검색..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
+                    <SearchInput
+                      placeholder="제목이나 설명으로 검색..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                   </div>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-[140px]">

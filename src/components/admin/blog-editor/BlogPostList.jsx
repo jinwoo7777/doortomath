@@ -3,10 +3,10 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { InlineSpinner } from '@/components/ui/spinner';
-import { Plus, FileText, Eye, Edit, Trash2, Search } from 'lucide-react';
+import { SearchInput } from '@/components/ui/search-input';
+import { Plus, FileText, Eye, Edit, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 /**
@@ -64,15 +64,11 @@ export default function BlogPostList({
         {/* 필터링 및 검색 */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="제목이나 내용으로 검색..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+            <SearchInput
+              placeholder="제목이나 내용으로 검색..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[140px]">
