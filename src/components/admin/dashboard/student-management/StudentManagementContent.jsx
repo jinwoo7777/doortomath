@@ -23,6 +23,7 @@ import StudentTabs from './components/StudentTabs';
 import StudentCoursesModal from './StudentCoursesModal';
 import StudentExamScoresModal from './StudentExamScoresModal';
 import StudentCommentModal from './StudentCommentModal';
+import PublicScoresModal from './components/PublicScoresModal';
 
 /**
  * 학생 관리 메인 컴포넌트
@@ -49,6 +50,8 @@ const StudentManagementContent = () => {
   const [selectedStudentForMemo, setSelectedStudentForMemo] = useState(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedStudentForPayment, setSelectedStudentForPayment] = useState(null);
+  const [isPublicScoresModalOpen, setIsPublicScoresModalOpen] = useState(false);
+  const [selectedStudentForPublicScores, setSelectedStudentForPublicScores] = useState(null);
 
   // 지점 선택 변경 시 강사 선택 초기화
   useEffect(() => {
@@ -259,6 +262,16 @@ const StudentManagementContent = () => {
     setSelectedStudentForPayment(null);
   };
 
+  const openPublicScoresModal = (student) => {
+    setSelectedStudentForPublicScores(student);
+    setIsPublicScoresModalOpen(true);
+  };
+
+  const closePublicScoresModal = () => {
+    setIsPublicScoresModalOpen(false);
+    setSelectedStudentForPublicScores(null);
+  };
+
   const handleCoursesUpdate = () => {
     fetchStudentSchedules();
     fetchData();
@@ -302,7 +315,7 @@ const StudentManagementContent = () => {
                 onViewCourses={openCoursesModal}
                 onViewExamScores={handleViewExamScores}
                 onOpenMemo={openMemoModal}
-                onOpenPayment={openPaymentModal}
+                onOpenPublicScores={openPublicScoresModal}
                 onOpenEnrollment={openEnrollmentModal}
                 getStudentSchedules={getStudentSchedules}
                 getStudentGradeAverage={getStudentGradeAverage}
@@ -337,7 +350,7 @@ const StudentManagementContent = () => {
                 onViewCourses={openCoursesModal}
                 onViewExamScores={handleViewExamScores}
                 onOpenMemo={openMemoModal}
-                onOpenPayment={openPaymentModal}
+                onOpenPublicScores={openPublicScoresModal}
                 onOpenEnrollment={openEnrollmentModal}
                 getStudentSchedules={getStudentSchedules}
                 getStudentGradeAverage={getStudentGradeAverage}
@@ -372,7 +385,7 @@ const StudentManagementContent = () => {
                 onViewCourses={openCoursesModal}
                 onViewExamScores={handleViewExamScores}
                 onOpenMemo={openMemoModal}
-                onOpenPayment={openPaymentModal}
+                onOpenPublicScores={openPublicScoresModal}
                 onOpenEnrollment={openEnrollmentModal}
                 getStudentSchedules={getStudentSchedules}
                 getStudentGradeAverage={getStudentGradeAverage}
@@ -419,6 +432,13 @@ const StudentManagementContent = () => {
         onClose={closeMemoModal}
         student={selectedStudentForMemo}
         onUpdate={handleCommentUpdate}
+      />
+
+      {/* 성적 공개 설정 모달 */}
+      <PublicScoresModal
+        isOpen={isPublicScoresModalOpen}
+        onClose={closePublicScoresModal}
+        student={selectedStudentForPublicScores}
       />
 
       {/* 추가 모달들은 필요에 따라 구현 */}

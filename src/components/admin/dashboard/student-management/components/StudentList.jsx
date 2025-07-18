@@ -31,7 +31,7 @@ const StudentList = ({
   onViewCourses,
   onViewExamScores,
   onOpenMemo,
-  onOpenPayment,
+  onOpenPublicScores,
   onOpenEnrollment,
   getStudentSchedules,
   getStudentGradeAverage,
@@ -226,8 +226,9 @@ const StudentList = ({
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => onOpenPayment(student)}
+                      onClick={() => onOpenPublicScores(student)}
                       className="h-8 w-8"
+                      title="성적 공개 설정"
                     >
                       <AppWindow className="h-4 w-4" />
                     </Button>
