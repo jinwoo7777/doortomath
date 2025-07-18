@@ -88,10 +88,23 @@ const TeachersList = ({
                     >
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-blue-600 font-semibold text-sm">
-                              {teacher.name.charAt(0)}
-                            </span>
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+                            {teacher.profile_image_url ? (
+                              <img 
+                                src={teacher.profile_image_url} 
+                                alt={teacher.name} 
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.onerror = null; 
+                                  e.target.style.display = 'none';
+                                  e.target.parentNode.textContent = teacher.name.charAt(0);
+                                }}
+                              />
+                            ) : (
+                              <span className="text-blue-600 font-semibold text-sm">
+                                {teacher.name.charAt(0)}
+                              </span>
+                            )}
                           </div>
                           <div>
                             <p className="font-medium">{teacher.name}</p>

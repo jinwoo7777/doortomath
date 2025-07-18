@@ -12,7 +12,8 @@ import {
   BarChart3,
   MessageSquare,
   CreditCard,
-  UserCheck
+  UserCheck,
+  AppWindow
 } from 'lucide-react';
 import { getBranchName } from '../utils/formatters';
 import SortableTableHeader from './SortableTableHeader';
@@ -218,6 +219,7 @@ const StudentList = ({
                       size="icon"
                       onClick={() => onOpenMemo(student)}
                       className="h-8 w-8"
+                      title="학생 코멘트"
                     >
                       <MessageSquare className="h-4 w-4" />
                     </Button>
@@ -227,7 +229,7 @@ const StudentList = ({
                       onClick={() => onOpenPayment(student)}
                       className="h-8 w-8"
                     >
-                      <CreditCard className="h-4 w-4" />
+                      <AppWindow className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"

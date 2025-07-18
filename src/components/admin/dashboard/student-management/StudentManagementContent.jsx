@@ -22,6 +22,7 @@ import StudentStats from './components/StudentStats';
 import StudentTabs from './components/StudentTabs';
 import StudentCoursesModal from './StudentCoursesModal';
 import StudentExamScoresModal from './StudentExamScoresModal';
+import StudentCommentModal from './StudentCommentModal';
 
 /**
  * 학생 관리 메인 컴포넌트
@@ -241,6 +242,12 @@ const StudentManagementContent = () => {
     setIsMemoModalOpen(false);
     setSelectedStudentForMemo(null);
   };
+  
+  // Handle comment updates
+  const handleCommentUpdate = () => {
+    // Refresh data if needed
+    fetchData();
+  };
 
   const openPaymentModal = (student) => {
     setSelectedStudentForPayment(student);
@@ -406,8 +413,16 @@ const StudentManagementContent = () => {
         student={selectedStudentForScores}
       />
 
+      {/* 학생 코멘트 모달 */}
+      <StudentCommentModal
+        isOpen={isMemoModalOpen}
+        onClose={closeMemoModal}
+        student={selectedStudentForMemo}
+        onUpdate={handleCommentUpdate}
+      />
+
       {/* 추가 모달들은 필요에 따라 구현 */}
-      {/* 수업 등록 모달, 상담 메모 모달, 결제 모달 등 */}
+      {/* 수업 등록 모달, 결제 모달 등 */}
     </div>
   );
 };
