@@ -366,15 +366,15 @@ export default function StudentExamAuthPage({ params }) {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="name">이름 *</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <User style={{ width: '16px', height: '16px', color: '#9ca3af', flexShrink: 0 }} />
                   <Input
                     id="name"
                     type="text"
                     placeholder="등록된 이름을 입력하세요"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className="pl-10"
+                    style={{ flex: 1 }}
                     required
                   />
                 </div>
@@ -382,15 +382,15 @@ export default function StudentExamAuthPage({ params }) {
 
               <div>
                 <Label htmlFor="phone">전화번호 *</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Phone style={{ width: '16px', height: '16px', color: '#9ca3af', flexShrink: 0 }} />
                   <Input
                     id="phone"
                     type="tel"
                     placeholder="등록된 전화번호를 입력하세요"
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className="pl-10"
+                    style={{ flex: 1 }}
                     required
                   />
                 </div>
