@@ -44,7 +44,7 @@ export default function StudentExamScoresModal({ student, isOpen, onClose }) {
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Trophy className="h-5 w-5 text-yellow-500" />
-            <span>{student.full_name}님의 시험 성적</span>
+            <span>{student.full_name} 학생 학습현황</span>
           </DialogTitle>
         </DialogHeader>
 

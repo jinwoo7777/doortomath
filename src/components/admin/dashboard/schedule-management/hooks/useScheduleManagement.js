@@ -269,6 +269,11 @@ export const useScheduleManagement = (branch = 'daechi') => {
     fetchSchedules();
   }, [branch]);
 
+  // 외부에서 호출할 수 있는 새로고침 함수
+  const refreshSchedules = () => {
+    fetchSchedules();
+  };
+
   return {
     schedules,
     loading,
@@ -285,7 +290,8 @@ export const useScheduleManagement = (branch = 'daechi') => {
     handleToggleActive,
     openAddDialog,
     openEditDialog,
-    resetForm
+    resetForm,
+    refreshSchedules
   };
 };
 

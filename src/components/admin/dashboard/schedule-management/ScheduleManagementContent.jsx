@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, ExternalLink } from 'lucide-react';
+import { Plus, ExternalLink, Upload } from 'lucide-react';
 
 import { useScheduleManagement } from './hooks/useScheduleManagement';
 import { useTeachers } from './hooks/useTeachers';
+import { useExcelUpload } from './hooks/useExcelUpload';
 import { getBranchName, getStats } from './utils/scheduleUtils';
 import ScheduleStats from './components/ScheduleStats';
 import ScheduleTable from './components/ScheduleTable';
@@ -18,6 +19,7 @@ import ScheduleForm from './components/ScheduleForm';
 import GradeSection from './components/GradeSection';
 import SchedulePageView from './components/SchedulePageView';
 import BranchScheduleView from './components/BranchScheduleView';
+import ExcelUpload from './components/ExcelUpload';
 
 const ScheduleManagementContent = ({ branch = 'daechi' }) => {
   const {
@@ -35,10 +37,13 @@ const ScheduleManagementContent = ({ branch = 'daechi' }) => {
     handleDeleteSchedule,
     handleToggleActive,
     openAddDialog,
-    openEditDialog
+    openEditDialog,
+    refreshSchedules
   } = useScheduleManagement(branch);
 
   const { teachers } = useTeachers();
+  const { uploadSchedules } = useExcelUpload();
+  const [isExcelUploadOpen, setIsExcelUploadOpen] = useState(false);
   const searchParams = useSearchParams();
   const selectedGrade = searchParams.get('grade');
   // 뷰 모드 상태 제거
@@ -50,6 +55,24 @@ const ScheduleManagementContent = ({ branch = 'daechi' }) => {
       setActiveTab(initialGrade);
     }
   }, [searchParams, setActiveTab]);
+
+  // 엑셀 업로드 성공 핸들러
+  const handleExcelUploadSuccess = async (scheduleData) => {
+    try {
+      const result = await uploadSchedules(scheduleData);
+      if (result.success) {
+        // 업로드 성공 시 데이터 새로고침
+        await refreshSchedules();
+      }
+      return result;
+    } catch (error) {
+      console.error('엑셀 업로드 오류:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  };
 
   const renderTabView = () => {
     return (
@@ -169,6 +192,14 @@ const ScheduleManagementContent = ({ branch = 'daechi' }) => {
               <span className="hidden sm:inline">시간표 페이지 새창보기</span>
             </Button>
           )}
+          <Button 
+            variant="outline"
+            onClick={() => setIsExcelUploadOpen(true)} 
+            className="flex items-center gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            <span className="hidden sm:inline">엑셀 업로드</span>
+          </Button>
           <Button onClick={() => openAddDialog()} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">새 시간표 추가</span>
@@ -190,6 +221,15 @@ const ScheduleManagementContent = ({ branch = 'daechi' }) => {
         onInputChange={handleInputChange}
         onSelectChange={handleSelectChange}
         onSubmit={handleAddEditSchedule}
+      />
+
+      {/* 엑셀 업로드 다이얼로그 */}
+      <ExcelUpload
+        isOpen={isExcelUploadOpen}
+        onClose={() => setIsExcelUploadOpen(false)}
+        branch={branch}
+        onUploadSuccess={handleExcelUploadSuccess}
+        getBranchName={getBranchName}
       />
     </div>
   );

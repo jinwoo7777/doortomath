@@ -8,12 +8,24 @@ let supabase;
 if (typeof window !== 'undefined') {
   // Browser environment
   if (!globalThis.supabase) {
-    globalThis.supabase = createClient(supabaseUrl, supabaseAnonKey);
+    globalThis.supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce'
+      }
+    });
   }
   supabase = globalThis.supabase;
 } else {
   // Server environment (should ideally use supabaseClientServer.js for SSR)
-  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
 }
 
 export { supabase};

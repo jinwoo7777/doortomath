@@ -10,6 +10,7 @@ import { ROLES, DEFAULT_REDIRECTS, ERROR_MESSAGES } from '../lib/auth/constants.
 import { fetchUserProfile } from '../lib/auth/profile.js';
 import { isSessionTimedOut, needsRefresh } from '../lib/auth/session.js';
 import { logDebug, logError, logWarn } from '../utils/logger.js';
+import { isRefreshTokenError, handleRefreshTokenError, withRefreshTokenErrorHandling } from '../lib/auth/refreshTokenErrorHandler.js';
 
 // 세션 체크 주기
 const SESSION_CHECK_INTERVAL = 60000; // 1분
@@ -288,15 +289,21 @@ export function useAuth() {
   // 세션 갱신
   const refreshSession = useCallback(async () => {
     try {
-      const { data, error } = await supabase.auth.refreshSession();
-      if (error) throw error;
+      const result = await withRefreshTokenErrorHandling(async () => {
+        const { data, error } = await supabase.auth.refreshSession();
+        if (error) throw error;
+        return data;
+      });
       
       updateState({
-        session: data.session,
+        session: result.session,
         lastActivity: new Date().toISOString()
       });
     } catch (error) {
       logError('[Auth] 세션 갱신 오류:', error);
+      if (isRefreshTokenError(error)) {
+        await handleRefreshTokenError(error);
+      }
     }
   }, [updateState]);
 
@@ -448,6 +455,12 @@ export function useAuth() {
             loading: false,
             roleLoaded: false,
             lastActivity: null
+          });
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log('[useAuth] TOKEN_REFRESHED 이벤트');
+          updateState({
+            session: session,
+            lastActivity: new Date().toISOString()
           });
         }
       }

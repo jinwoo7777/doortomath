@@ -103,59 +103,63 @@ export default function SouthWiryeSchedulePage() {
     return `${remaining}명 가능`;
   };
 
-  // 특정 요일과 시간대의 수업 찾기
-  const findSchedule = (grade, dayOfWeek, timeSlot) => {
-    return schedules[grade].find(s => s.day_of_week === dayOfWeek && s.time_slot === timeSlot);
+  // 특정 요일과 시간대의 모든 수업 찾기
+  const findSchedules = (grade, dayOfWeek, timeSlot) => {
+    return schedules[grade].filter(s => s.day_of_week === dayOfWeek && s.time_slot === timeSlot);
   };
 
-  const renderScheduleCell = (schedule) => {
-    if (!schedule) {
+  const renderScheduleCell = (schedules) => {
+    if (!schedules || schedules.length === 0) {
       return <div className="text-center text-gray-400 text-sm">-</div>;
     }
 
     return (
-      <div className="space-y-2 p-2">
-        <div className="font-medium text-sm">{schedule.subject}</div>
-        
-        {schedule.teacher_name && (
-          <div className="flex items-center gap-1 text-xs text-gray-600">
-            <GraduationCap className="h-3 w-3" />
-            <span>{schedule.teacher_name}</span>
+      <div className="space-y-3 p-2">
+        {schedules.map((schedule, index) => (
+          <div key={schedule.id || index} className="border-b border-gray-100 pb-2 last:border-b-0 last:pb-0">
+            <div className="font-medium text-sm">{schedule.subject}</div>
+            
+            {schedule.teacher_name && (
+              <div className="flex items-center gap-1 text-xs text-gray-600 mt-1">
+                <GraduationCap className="h-3 w-3" />
+                <span>{schedule.teacher_name}</span>
+              </div>
+            )}
+            
+            {schedule.classroom && (
+              <div className="flex items-center gap-1 text-xs text-gray-600 mt-1">
+                <MapPin className="h-3 w-3" />
+                <span>{schedule.classroom}</span>
+              </div>
+            )}
+            
+            <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center gap-1 text-xs">
+                <Users className="h-3 w-3 text-gray-500" />
+                <span className={getAvailabilityColor(schedule.current_students, schedule.max_students)}>
+                  {schedule.current_students}/{schedule.max_students}
+                </span>
+              </div>
+              
+              <Badge 
+                variant={
+                  schedule.current_students >= schedule.max_students 
+                    ? "destructive" 
+                    : "default"
+                }
+                className="text-xs"
+              >
+                {getAvailabilityText(schedule.current_students, schedule.max_students)}
+              </Badge>
+            </div>
+            
+            {schedule.description && (
+              <div className="text-xs text-gray-500 mt-1">
+                {schedule.description}
+              </div>
+            )}
           </div>
-        )}
-        
-        {schedule.classroom && (
-          <div className="flex items-center gap-1 text-xs text-gray-600">
-            <MapPin className="h-3 w-3" />
-            <span>{schedule.classroom}</span>
-          </div>
-        )}
-        
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 text-xs">
-            <Users className="h-3 w-3 text-gray-500" />
-            <span className={getAvailabilityColor(schedule.current_students, schedule.max_students)}>
-              {schedule.current_students}/{schedule.max_students}
-            </span>
-          </div>
-          
-          <Badge 
-            variant={
-              schedule.current_students >= schedule.max_students 
-                ? "destructive" 
-                : "default"
-            }
-            className="text-xs"
-          >
-            {getAvailabilityText(schedule.current_students, schedule.max_students)}
-          </Badge>
-        </div>
-        
-        {schedule.description && (
-          <div className="text-xs text-gray-500 mt-1">
-            {schedule.description}
-          </div>
-        )}
+        ))}
       </div>
     );
   };
@@ -212,13 +216,13 @@ export default function SouthWiryeSchedulePage() {
                         </div>
                       </TableCell>
                       {[1, 2, 3, 4, 5, 6, 7].map((dayOfWeek) => {
-                        const schedule = findSchedule(grade, dayOfWeek, timeSlot);
+                        const daySchedules = findSchedules(grade, dayOfWeek, timeSlot);
                         return (
                           <TableCell 
                             key={dayOfWeek} 
                             className="border-r border-gray-200 align-top min-w-[200px]"
                           >
-                            {renderScheduleCell(schedule)}
+                            {renderScheduleCell(daySchedules)}
                           </TableCell>
                         );
                       })}

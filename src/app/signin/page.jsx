@@ -48,7 +48,12 @@ function SigninContent() {
         console.log('로그인 페이지 접근: 이전 세션 초기화 중...');
         const { error } = await supabase.auth.signOut();
         if (error) {
-          console.error('세션 초기화 중 오류 발생:', error.message);
+          // "Auth session missing!" 은 정상적인 상황이므로 에러로 처리하지 않음
+          if (error.message !== 'Auth session missing!') {
+            console.error('세션 초기화 중 오류 발생:', error.message);
+          } else {
+            console.log('세션이 없는 상태 (정상)');
+          }
         } else {
           console.log('이전 세션이 성공적으로 초기화되었습니다.');
         }
