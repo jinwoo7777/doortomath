@@ -7,7 +7,7 @@ export async function GET(request) {
   try {
     const searchParams = new URL(request.url).searchParams;
     const studentId = searchParams.get('studentId');
-    
+
     if (!studentId) {
       return NextResponse.json(
         { error: 'Student ID is required' },
@@ -16,7 +16,7 @@ export async function GET(request) {
     }
 
     const supabase = createRouteHandlerClient({ cookies });
-    
+
     // Check user authentication and role
     const {
       data: { user },
@@ -45,18 +45,24 @@ export async function GET(request) {
 
     // 병렬로 데이터 가져오기 (Promise.all 사용)
     const [commentsResult, coursesResult, teachersResult] = await Promise.all([
-      // 1. 코멘트 데이터 가져오기
+      // 1. 코멘트 데이터 가져오기 - 필요한 필드만 선택하여 성능 향상
       supabase
         .from('student_comments')
         .select(`
-          *,
+          id,
+          content,
+          created_at,
+          updated_at,
+          schedule_id,
+          instructor_id,
           instructor:instructor_id(id, full_name, email),
           schedule:schedule_id(id, subject)
         `)
         .eq('student_id', studentId)
-        .order('created_at', { ascending: false }),
-      
-      // 2. 학생 강의 정보 가져오기
+        .order('created_at', { ascending: false })
+        .limit(20), // 최근 20개 코멘트만 가져오기
+
+      // 2. 학생 강의 정보 가져오기 - 필요한 필드만 선택
       supabase
         .from('student_enrollments')
         .select(`
@@ -67,12 +73,14 @@ export async function GET(request) {
             teacher_name
           )
         `)
-        .eq('student_id', studentId),
-      
-      // 3. 강사 정보 가져오기
+        .eq('student_id', studentId)
+        .eq('status', 'active'), // 활성 상태인 강의만 가져오기
+
+      // 3. 강사 정보 가져오기 - 캐싱을 위한 데이터
       supabase
         .from('teachers')
         .select('id, name, profile_image_url')
+        .limit(50) // 최대 50명의 강사 정보만 가져오기
     ]);
 
     // 에러 처리
@@ -99,18 +107,18 @@ export async function GET(request) {
     // 코멘트 데이터에 강사 정보 보완
     const enhancedComments = commentsResult.data?.map(comment => {
       // 해당 코멘트의 강의 ID와 일치하는 강의 찾기
-      const relatedCourse = courses.find(course => 
-        course.id === comment.schedule_id || 
+      const relatedCourse = courses.find(course =>
+        course.id === comment.schedule_id ||
         course.id === comment.course_id
       );
-      
+
       // 강사 정보와 강의 정보 업데이트
       if (relatedCourse) {
         // 강사 이름으로 teachers 테이블에서 강사 정보 찾기
-        const teacherInfo = teachers.find(teacher => 
+        const teacherInfo = teachers.find(teacher =>
           teacher.name === relatedCourse.instructor_name
         );
-        
+
         // 강사 정보 업데이트
         if (comment.instructor) {
           comment.instructor.full_name = relatedCourse.instructor_name;
@@ -123,7 +131,7 @@ export async function GET(request) {
             ...(teacherInfo && { avatar_url: teacherInfo.profile_image_url })
           };
         }
-        
+
         // 강의 정보 업데이트
         if (!comment.schedule) {
           comment.schedule = {
@@ -132,11 +140,11 @@ export async function GET(request) {
           };
         }
       }
-      
+
       return comment;
     }) || [];
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       comments: enhancedComments,
       courses,
       teachers
@@ -154,7 +162,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const supabase = createRouteHandlerClient({ cookies });
-    
+
     // Check user authentication
     const {
       data: { user },
@@ -191,7 +199,7 @@ export async function POST(request) {
 
     // Parse request body
     const { studentId, content, scheduleId, instructorId } = await request.json();
-    
+
     // Validate required fields
     if (!studentId || !content) {
       return NextResponse.json(
@@ -249,7 +257,7 @@ export async function DELETE(request) {
   try {
     const searchParams = new URL(request.url).searchParams;
     const commentId = searchParams.get('id');
-    
+
     if (!commentId) {
       return NextResponse.json(
         { error: 'Comment ID is required' },
@@ -258,7 +266,7 @@ export async function DELETE(request) {
     }
 
     const supabase = createRouteHandlerClient({ cookies });
-    
+
     // Check user authentication
     const {
       data: { user },
@@ -318,7 +326,7 @@ export async function DELETE(request) {
       // Check if instructor created this comment or is assigned to the course
       const isCreator = comment.created_by === user.id;
       const isInstructor = comment.instructor_id === user.id;
-      
+
       if (!isCreator && !isInstructor) {
         return NextResponse.json(
           { error: 'You do not have permission to delete this comment' },
@@ -341,7 +349,7 @@ export async function DELETE(request) {
       );
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
       message: '코멘트가 성공적으로 삭제되었습니다.'
     });
