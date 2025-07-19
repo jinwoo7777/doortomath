@@ -164,8 +164,74 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
       // 단일 API 호출로 모든 데이터 가져오기
       const data = await fetchStudentCommentData(student.id);
 
-      // 강의 정보 설정
-      setCourses(data.courses || []);
+      // 강의 정보가 없는 경우 추가 조회 시도
+      if (!data.courses || data.courses.length === 0) {
+        console.log('API에서 강의 정보를 찾지 못했습니다. 직접 조회를 시도합니다.');
+
+        // Supabase 클라이언트 생성
+        const supabase = createClientComponentClient();
+
+        // 먼저 student_enrollments 테이블 조회 시도
+        let { data: enrollmentsData, error: enrollmentsError } = await supabase
+          .from('student_enrollments')
+          .select(`
+            id,
+            schedule_id,
+            schedules:schedule_id (
+              id,
+              subject,
+              teacher_name
+            )
+          `)
+          .eq('student_id', student.id)
+          .eq('status', 'active');
+
+        // 데이터 변환
+        let coursesData = [];
+
+        if (!enrollmentsError && enrollmentsData && enrollmentsData.length > 0) {
+          coursesData = enrollmentsData
+            .filter(item => item.schedules)
+            .map(item => ({
+              id: item.schedule_id,
+              title: item.schedules.subject,
+              instructor_name: item.schedules.teacher_name || '강사 정보 없음',
+              instructor_id: null // 강사 ID 정보가 없는 경우
+            }));
+        } else {
+          // student_schedules 테이블 조회 시도
+          const { data: schedulesData, error: schedulesError } = await supabase
+            .from('student_schedules')
+            .select(`
+              id,
+              schedule_id,
+              schedule:schedule_id (
+                id,
+                subject,
+                teacher_name
+              )
+            `)
+            .eq('student_id', student.id)
+            .eq('status', 'active');
+
+          if (!schedulesError && schedulesData && schedulesData.length > 0) {
+            coursesData = schedulesData
+              .filter(item => item.schedule)
+              .map(item => ({
+                id: item.schedule_id,
+                title: item.schedule.subject,
+                instructor_name: item.schedule.teacher_name || '강사 정보 없음',
+                instructor_id: null // 강사 ID 정보가 없는 경우
+              }));
+          }
+        }
+
+        // 강의 정보 설정
+        setCourses(coursesData);
+      } else {
+        // API에서 가져온 강의 정보 설정
+        setCourses(data.courses || []);
+      }
     } catch (error) {
       toast.error('학생 강의 정보를 불러오는 중 오류가 발생했습니다.');
       console.error('Error loading student courses:', error);

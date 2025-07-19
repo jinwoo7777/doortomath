@@ -97,7 +97,8 @@ export default function StudentCoursesSection({ supabase, studentId }) {
       }
 
       // 학생이 수강 중인 과목 정보 조회 - 필요한 필드만 선택하여 성능 향상
-      const { data: enrollmentsData, error: enrollmentsError } = await supabase
+      // 먼저 student_enrollments 테이블 조회 시도
+      let { data: enrollmentsData, error: enrollmentsError } = await supabase
         .from('student_enrollments')
         .select(`
           id,
@@ -114,6 +115,39 @@ export default function StudentCoursesSection({ supabase, studentId }) {
         `)
         .eq('student_id', studentId)
         .eq('status', 'active');
+
+      // student_enrollments에서 데이터를 찾지 못한 경우 student_schedules 테이블 조회
+      if ((!enrollmentsData || enrollmentsData.length === 0) && !enrollmentsError) {
+        console.log('student_enrollments에서 데이터를 찾지 못했습니다. student_schedules 테이블 조회 시도...');
+        
+        const { data: schedulesData, error: schedulesError } = await supabase
+          .from('student_schedules')
+          .select(`
+            id,
+            schedule:schedule_id (
+              id,
+              grade,
+              day_of_week,
+              time_slot,
+              subject,
+              teacher_name,
+              classroom,
+              branch
+            )
+          `)
+          .eq('student_id', studentId)
+          .eq('status', 'active');
+          
+        if (schedulesError) {
+          console.error('student_schedules 조회 오류:', schedulesError);
+        } else if (schedulesData && schedulesData.length > 0) {
+          // student_schedules 데이터를 student_enrollments 형식으로 변환
+          enrollmentsData = schedulesData.map(item => ({
+            id: item.id,
+            schedules: item.schedule
+          }));
+        }
+      }
 
       if (enrollmentsError) {
         throw enrollmentsError;

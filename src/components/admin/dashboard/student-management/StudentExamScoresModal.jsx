@@ -54,6 +54,7 @@ export default function StudentExamScoresModal({ student, isOpen, onClose, stude
             selectedPeriod={selectedPeriod}
             setSelectedPeriod={setSelectedPeriod}
             getSubjects={getSubjects}
+            studentId={student.id} // 학생 ID 전달
           />
 
           {/* 성적 요약 카드 */}

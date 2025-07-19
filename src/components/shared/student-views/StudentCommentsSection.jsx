@@ -144,7 +144,7 @@ export default function StudentCommentsSection({ supabase, studentId }) {
       }
 
       // Supabase를 사용하여 데이터 가져오기
-      const [commentsResult, coursesResult, teachersResult] = await Promise.all([
+      const [commentsResult, teachersResult] = await Promise.all([
         // 1. 코멘트 데이터 가져오기
         supabase
           .from('student_comments')
@@ -162,21 +162,7 @@ export default function StudentCommentsSection({ supabase, studentId }) {
           .order('created_at', { ascending: false })
           .limit(20),
 
-        // 2. 학생 강의 정보 가져오기
-        supabase
-          .from('student_enrollments')
-          .select(`
-            id,
-            schedule:schedule_id(
-              id,
-              subject,
-              teacher_name
-            )
-          `)
-          .eq('student_id', studentId)
-          .eq('status', 'active'),
-
-        // 3. 강사 정보 가져오기
+        // 2. 강사 정보 가져오기
         supabase
           .from('teachers')
           .select('id, name, profile_image_url')
@@ -187,14 +173,56 @@ export default function StudentCommentsSection({ supabase, studentId }) {
         throw commentsResult.error;
       }
 
-      // 강의 정보 추출
-      const courses = coursesResult.data
-        ?.filter(item => item.schedule)
-        .map(item => ({
-          id: item.schedule.id,
-          title: item.schedule.subject,
-          instructor_name: item.schedule.teacher_name || '강사 정보 없음'
-        })) || [];
+      // 학생 강의 정보 가져오기 - 먼저 student_enrollments 테이블 시도
+      let coursesResult = await supabase
+        .from('student_enrollments')
+        .select(`
+          id,
+          schedule:schedule_id(
+            id,
+            subject,
+            teacher_name
+          )
+        `)
+        .eq('student_id', studentId)
+        .eq('status', 'active');
+
+      // student_enrollments에서 데이터를 찾지 못한 경우 student_schedules 테이블 조회
+      let courses = [];
+      if (!coursesResult.error && coursesResult.data && coursesResult.data.length > 0) {
+        courses = coursesResult.data
+          .filter(item => item.schedule)
+          .map(item => ({
+            id: item.schedule.id,
+            title: item.schedule.subject,
+            instructor_name: item.schedule.teacher_name || '강사 정보 없음'
+          }));
+      } else {
+        console.log('student_enrollments에서 데이터를 찾지 못했습니다. student_schedules 테이블 조회 시도...');
+        
+        const schedulesResult = await supabase
+          .from('student_schedules')
+          .select(`
+            id,
+            schedule:schedule_id(
+              id,
+              subject,
+              teacher_name
+            )
+          `)
+          .eq('student_id', studentId)
+          .eq('status', 'active');
+          
+        if (!schedulesResult.error && schedulesResult.data && schedulesResult.data.length > 0) {
+          courses = schedulesResult.data
+            .filter(item => item.schedule)
+            .map(item => ({
+              id: item.schedule.id,
+              title: item.schedule.subject,
+              instructor_name: item.schedule.teacher_name || '강사 정보 없음'
+            }));
+        }
+      }
 
       // 강사 정보 추출
       const teachers = teachersResult.data || [];
