@@ -405,7 +405,7 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
                       </div>
                       
                       {/* 말풍선 */}
-                      <div className="chat-bubble relative flex-1">
+                      <div className="chat-bubble relative inline-block max-w-[80%]">
                         {/* 말풍선 본체 */}
                         <div className="bg-blue-100 rounded-lg px-4 py-3 text-sm relative">
                           {/* 말풍선 꼬리 - 삼각형 모양 */}

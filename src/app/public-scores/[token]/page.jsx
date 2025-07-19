@@ -20,14 +20,15 @@ import AutoScoreTable from '@/components/admin/dashboard/student-management/comp
 import useExamScores from '@/components/admin/dashboard/student-management/hooks/useExamScores';
 import { getScoreBadge, getExamTypeBadge } from '@/components/admin/dashboard/student-management/utils/scoreUtils';
 
-// 강사 코멘트 컴포넌트
-import StudentCommentsSection from './components/StudentCommentsSection_Simple';
+// 강사 코멘트 및 수강 과목 컴포넌트
+import StudentCommentsSection from '@/components/shared/student-views/StudentCommentsSection';
+import StudentCoursesSection from '@/components/shared/student-views/StudentCoursesSection';
 
 export default function PublicScoresPage({ params }) {
   const router = useRouter();
   const resolvedParams = use(params);
   const token = resolvedParams.token;
-  
+
   // 공개 페이지용 Supabase 클라이언트 (인증 없음)
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -40,7 +41,7 @@ export default function PublicScoresPage({ params }) {
       }
     }
   );
-  
+
   const [step, setStep] = useState('login'); // 'login' | 'scores'
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
@@ -258,7 +259,7 @@ export default function PublicScoresPage({ params }) {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.username.trim() || !formData.password.trim()) {
       setError('아이디와 비밀번호를 모두 입력해주세요.');
       return;
@@ -304,18 +305,18 @@ export default function PublicScoresPage({ params }) {
 
       // 3. 비밀번호 확인
       const isPasswordValid = await verifyPassword(formData.password, accountData.password_hash);
-      
+
       if (!isPasswordValid) {
         // 로그인 실패 횟수 증가
         await supabase
           .from('student_accounts')
-          .update({ 
+          .update({
             login_attempts: (accountData.login_attempts || 0) + 1,
-            locked_until: (accountData.login_attempts || 0) >= 4 ? 
+            locked_until: (accountData.login_attempts || 0) >= 4 ?
               new Date(Date.now() + 30 * 60 * 1000).toISOString() : null // 5번 실패 시 30분 잠금
           })
           .eq('id', accountData.id);
-          
+
         throw new Error('비밀번호가 올바르지 않습니다.');
       }
 
@@ -327,7 +328,7 @@ export default function PublicScoresPage({ params }) {
       // 5. 로그인 성공 처리
       await supabase
         .from('student_accounts')
-        .update({ 
+        .update({
           last_login_at: new Date().toISOString(),
           login_attempts: 0,
           locked_until: null
@@ -340,10 +341,10 @@ export default function PublicScoresPage({ params }) {
       });
 
       setStudent(accountData.students);
-      
+
       // 성적 데이터 로드
       await loadExamScoresData(accountData.student_id);
-      
+
       setStep('scores');
     } catch (error) {
       console.error('로그인 오류:', error);
@@ -415,7 +416,7 @@ export default function PublicScoresPage({ params }) {
           </CardHeader>
           <CardContent>
             <p className="text-center text-gray-600 mb-4">{error}</p>
-            <Button 
+            <Button
               onClick={() => router.push('/')}
               className="w-full"
             >
@@ -484,8 +485,8 @@ export default function PublicScoresPage({ params }) {
                   </Alert>
                 )}
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={authLoading}
                   className="w-full"
                 >
@@ -509,9 +510,9 @@ export default function PublicScoresPage({ params }) {
                     <p className="text-sm text-gray-600 mb-2">
                       아이디나 비밀번호를 잊으셨나요?
                     </p>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
+                    <Button
+                      type="button"
+                      variant="ghost"
                       className="w-full text-blue-600 hover:text-blue-700"
                       onClick={() => router.push(`/public-scores/${token}/find-account`)}
                     >
@@ -524,9 +525,9 @@ export default function PublicScoresPage({ params }) {
                     <p className="text-sm text-gray-600 mb-2">
                       계정이 없으신가요?
                     </p>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       className="w-full"
                       onClick={() => router.push(`/public-scores/${token}/register`)}
                     >
@@ -621,6 +622,14 @@ export default function PublicScoresPage({ params }) {
               mounted={mounted}
             />
 
+            {/* 수강 중인 과목 섹션 */}
+            <div className="mb-6">
+              <StudentCoursesSection
+                supabase={supabase}
+                studentId={student.id}
+              />
+            </div>
+
             {/* 탭 컨텐츠 */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-3">
@@ -662,7 +671,7 @@ export default function PublicScoresPage({ params }) {
               </TabsContent>
 
               <TabsContent value="comments" className="space-y-4">
-                <StudentCommentsSection 
+                <StudentCommentsSection
                   supabase={supabase}
                   studentId={student.id}
                 />

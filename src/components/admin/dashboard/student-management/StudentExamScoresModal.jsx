@@ -19,8 +19,6 @@ import { getScoreBadge, getExamTypeBadge } from './utils/scoreUtils';
  */
 export default function StudentExamScoresModal({ student, isOpen, onClose, studentData, onDataUpdate }) {
   const {
-    examScores,
-    examSessions,
     loading,
     selectedSubject,
     setSelectedSubject,

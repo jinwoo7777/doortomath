@@ -11,13 +11,14 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Plus } from 'lucide-react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 // 커스텀 훅 및 컴포넌트 가져오기
 import useCourseManagement from './hooks/useCourseManagement';
 import CourseList from './components/CourseList';
 import CourseAddForm from './components/CourseAddForm';
-import StudentCommentList from './components/StudentCommentList';
 import StudentCommentModal from './StudentCommentModal';
+import StudentCommentsSection from '@/components/shared/student-views/StudentCommentsSection';
 
 /**
  * 학생 수강 강의 관리 모달 컴포넌트
@@ -49,6 +50,9 @@ const StudentCoursesModal = ({
     filteredAvailableSchedules
   } = useCourseManagement(student, onUpdate);
 
+  // Supabase 클라이언트 생성
+  const supabase = createClientComponentClient();
+  
   // 코멘트 모달 상태 관리
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
 
@@ -130,10 +134,21 @@ const StudentCoursesModal = ({
             <div className="mt-6 border-t pt-4">
               <h3 className="text-lg font-semibold mb-4">강사 코멘트</h3>
               {student && (
-                <StudentCommentList 
-                  studentId={student.id} 
-                  onEdit={openCommentModal}
-                />
+                <div className="relative">
+                  <StudentCommentsSection 
+                    supabase={supabase}
+                    studentId={student.id}
+                  />
+                  <div className="absolute top-4 right-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={openCommentModal}
+                    >
+                      코멘트 관리
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
           </div>
