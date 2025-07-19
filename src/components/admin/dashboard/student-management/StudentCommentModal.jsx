@@ -24,14 +24,14 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
   const [comments, setComments] = useState([]);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState(null);
-  
+
   // New comment form state
   const [courses, setCourses] = useState([]);
   const [coursesLoading, setCoursesLoading] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [commentContent, setCommentContent] = useState('');
   const [contentError, setContentError] = useState('');
-  
+
   // Fetch student comments when the modal opens or student changes
   useEffect(() => {
     if (isOpen && student?.id) {
@@ -39,7 +39,7 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
       loadStudentCourses();
     }
   }, [isOpen, student]);
-  
+
   // Reset form when modal closes
   useEffect(() => {
     if (!isOpen) {
@@ -54,64 +54,71 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
     teachers: [],
     lastFetch: null
   });
-  
+
   // Function to load comments with performance optimizations
   const loadComments = async () => {
     if (!student?.id) return;
-    
+
     try {
       setLoading(true);
-      
+
+      // 캐시 만료 시간 (5분)
+      const CACHE_EXPIRY = 5 * 60 * 1000;
+      const now = Date.now();
+      const isCacheValid = dataCache.lastFetch && (now - dataCache.lastFetch < CACHE_EXPIRY);
+
       // 단일 API 호출로 모든 데이터 가져오기
       const data = await fetchStudentCommentData(student.id);
-      
+
       // 데이터 추출
       const commentsData = data.comments || [];
-      const coursesData = data.courses || [];
-      
-      // 강사 데이터 캐싱 (5분 캐시)
-      const now = Date.now();
-      const teachersData = dataCache.teachers.length > 0 && dataCache.lastFetch && (now - dataCache.lastFetch < 5 * 60 * 1000)
+
+      // 강의 및 강사 데이터 캐싱
+      const coursesData = isCacheValid && dataCache.courses?.length > 0
+        ? dataCache.courses
+        : data.courses || [];
+
+      const teachersData = isCacheValid && dataCache.teachers.length > 0
         ? dataCache.teachers
         : data.teachers || [];
-      
-      // 캐시 업데이트
-      if (teachersData !== dataCache.teachers) {
+
+      // 캐시가 만료되었거나 비어있으면 캐시 업데이트
+      if (!isCacheValid || dataCache.courses?.length === 0 || dataCache.teachers.length === 0) {
         setDataCache({
           teachers: teachersData,
+          courses: coursesData,
           lastFetch: now
         });
       }
-      
+
       // 강의 정보 설정
       setCourses(coursesData);
-      
+
       // 룩업 테이블 생성 (O(1) 검색 속도)
       const courseMap = new Map();
       coursesData.forEach(course => {
         courseMap.set(course.id, course);
       });
-      
+
       const teacherMap = new Map();
       teachersData.forEach(teacher => {
         teacherMap.set(teacher.name, teacher);
       });
-      
+
       // 최적화된 데이터 매핑
       const enhancedComments = commentsData.map(comment => {
-        const enhancedComment = { ...comment };
-        
         // 이미 서버에서 데이터가 보강되었다면 추가 처리 불필요
-        if (enhancedComment.instructor?.full_name && enhancedComment.schedule?.subject) {
-          return enhancedComment;
+        if (comment.instructor?.full_name && comment.schedule?.subject) {
+          return comment;
         }
-        
+
         // 룩업 테이블을 사용하여 O(1) 시간 복잡도로 검색
         const relatedCourse = courseMap.get(comment.schedule_id) || courseMap.get(comment.course_id);
-        
+        const enhancedComment = { ...comment };
+
         if (relatedCourse) {
           const teacherInfo = teacherMap.get(relatedCourse.instructor_name);
-          
+
           // 강사 정보 업데이트
           enhancedComment.instructor = {
             ...(enhancedComment.instructor || {}),
@@ -120,17 +127,18 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
             // 강사 프로필 이미지 추가 (있는 경우)
             ...(teacherInfo && { avatar_url: teacherInfo.profile_image_url })
           };
-          
+
           // 강의 정보 업데이트
           enhancedComment.schedule = {
+            ...(enhancedComment.schedule || {}),
             id: relatedCourse.id,
             subject: relatedCourse.title
           };
         }
-        
+
         return enhancedComment;
       });
-      
+
       setComments(enhancedComments);
     } catch (error) {
       toast.error('코멘트를 불러오는 중 오류가 발생했습니다.');
@@ -139,23 +147,23 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
       setLoading(false);
     }
   };
-  
+
   // Function to load student courses - 최적화된 버전
   const loadStudentCourses = async () => {
     if (!student?.id) return;
-    
+
     try {
       setCoursesLoading(true);
-      
+
       // 이미 코멘트 로딩 과정에서 강의 정보를 가져왔다면 추가 API 호출 방지
       if (courses.length > 0) {
         setCoursesLoading(false);
         return;
       }
-      
+
       // 단일 API 호출로 모든 데이터 가져오기
       const data = await fetchStudentCommentData(student.id);
-      
+
       // 강의 정보 설정
       setCourses(data.courses || []);
     } catch (error) {
@@ -169,16 +177,16 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
   // Function to delete a comment
   const handleDeleteComment = async () => {
     if (!commentToDelete) return;
-    
+
     try {
       setDeleteLoading(true);
       await deleteStudentComment(commentToDelete);
-      
+
       // Remove the deleted comment from the state
       setComments(comments.filter(comment => comment.id !== commentToDelete));
-      
+
       toast.success('코멘트가 삭제되었습니다.');
-      
+
       // Call the onUpdate callback if provided
       if (onUpdate) {
         onUpdate();
@@ -191,23 +199,23 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
       setCommentToDelete(null);
     }
   };
-  
+
   // Validate comment content
   const validateContent = () => {
     if (!commentContent.trim()) {
       setContentError('코멘트 내용을 입력해주세요.');
       return false;
     }
-    
+
     if (commentContent.length > 1000) {
       setContentError('코멘트는 1000자를 초과할 수 없습니다.');
       return false;
     }
-    
+
     setContentError('');
     return true;
   };
-  
+
   // Handle content change
   const handleContentChange = (e) => {
     setCommentContent(e.target.value);
@@ -215,30 +223,30 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
       validateContent();
     }
   };
-  
+
   // Handle save comment
   const [saveLoading, setSaveLoading] = useState(false);
-  
+
   const handleSaveComment = async () => {
     // Validate form
     if (!validateContent()) {
       return;
     }
-    
+
     try {
       setSaveLoading(true);
-      
+
       // Get instructor ID and course info from selected course
       let instructorId = null;
       let selectedCourseObj = null;
-      
+
       if (selectedCourse) {
         selectedCourseObj = courses.find(course => course.id === selectedCourse);
         if (selectedCourseObj) {
           instructorId = selectedCourseObj.instructor_id;
         }
       }
-      
+
       // Add comment
       let newComment = await addStudentComment(
         student.id,
@@ -246,14 +254,14 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
         selectedCourse || null, // This is scheduleId
         instructorId
       );
-      
+
       // 새 코멘트에 강사 정보 직접 추가
       if (selectedCourseObj) {
         // 강사 프로필 이미지 정보 찾기
-        const teacherInfo = dataCache.teachers.find(teacher => 
+        const teacherInfo = dataCache.teachers.find(teacher =>
           teacher.name === selectedCourseObj.instructor_name
         );
-        
+
         // 새 코멘트 객체 생성 (프로필 이미지 포함)
         newComment = {
           ...newComment,
@@ -268,26 +276,26 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
             subject: selectedCourseObj.title
           }
         };
-        
+
         // 코멘트 목록에 추가
         setComments([newComment, ...comments]);
-        
+
         // Reset form
         setSelectedCourse('');
         setCommentContent('');
-        
+
         toast.success('코멘트가 저장되었습니다.');
       } else {
         // Reset form
         setSelectedCourse('');
         setCommentContent('');
-        
+
         toast.success('코멘트가 저장되었습니다.');
-        
+
         // 서버에서 데이터 다시 로드
         await loadComments();
       }
-      
+
       // Call the onUpdate callback if provided
       if (onUpdate) {
         onUpdate();
@@ -320,7 +328,7 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
           <DialogHeader>
             <DialogTitle>강사 코멘트 - {student?.full_name}</DialogTitle>
           </DialogHeader>
-          
+
           {/* Student information section */}
           <div className="bg-muted/30 p-4 rounded-md mb-4">
             <h3 className="font-medium mb-2">학생 정보</h3>
@@ -347,7 +355,7 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
               </div>
             )}
           </div>
-          
+
           {/* Comments section */}
           <div className="mb-4">
             <h3 className="font-medium mb-2">기존 코멘트</h3>
@@ -380,12 +388,12 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
                         <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-xs font-medium overflow-hidden">
                           {comment.instructor ? (
                             comment.instructor.avatar_url ? (
-                              <img 
-                                src={comment.instructor.avatar_url} 
-                                alt={comment.instructor.full_name} 
+                              <img
+                                src={comment.instructor.avatar_url}
+                                alt={comment.instructor.full_name}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
-                                  e.target.onerror = null; 
+                                  e.target.onerror = null;
                                   e.target.style.display = 'none';
                                   e.target.parentNode.textContent = comment.instructor.full_name?.charAt(0) || '강';
                                 }}
@@ -398,12 +406,12 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
                           )}
                         </div>
                         <span className="text-xs mt-1 text-gray-500 w-full text-center" style={{ maxWidth: '80px', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
-                          {comment.instructor && comment.instructor.full_name 
-                            ? `${comment.instructor.full_name.charAt(0)}선생` 
+                          {comment.instructor && comment.instructor.full_name
+                            ? `${comment.instructor.full_name.charAt(0)}선생`
                             : '강사'}
                         </span>
                       </div>
-                      
+
                       {/* 말풍선 */}
                       <div className="chat-bubble relative inline-block max-w-[80%]">
                         {/* 말풍선 본체 */}
@@ -413,10 +421,10 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
                           <div className="whitespace-pre-wrap">{comment.content}</div>
                         </div>
                       </div>
-                      
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="h-8 w-8 ml-2 text-destructive hover:text-destructive hover:bg-destructive/10 self-start"
                         onClick={() => setCommentToDelete(comment.id)}
                         aria-label="코멘트 삭제"
@@ -433,11 +441,11 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
               </div>
             )}
           </div>
-          
+
           {/* New comment form */}
           <div className="border-t pt-4 mb-4">
             <h3 className="font-medium mb-3">새 코멘트 작성</h3>
-            
+
             <div className="space-y-4">
               {/* Course selection */}
               <div className="space-y-2">
@@ -470,7 +478,7 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               {/* Comment content */}
               <div className="space-y-2">
                 <Label htmlFor="content">코멘트 내용</Label>
@@ -492,14 +500,14 @@ const StudentCommentModal = ({ isOpen, onClose, student, onUpdate }) => {
               </div>
             </div>
           </div>
-          
+
           {/* Footer with action buttons */}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose} disabled={saveLoading}>
               취소
             </Button>
-            <Button 
-              onClick={handleSaveComment} 
+            <Button
+              onClick={handleSaveComment}
               disabled={saveLoading || !commentContent.trim()}
             >
               {saveLoading ? (
