@@ -251,6 +251,12 @@ export default function AnswerKeyDetail({ answerKey, onBack, onEdit, onDelete })
                           <Badge variant="secondary" className="text-sm">
                             {answer.score}점
                           </Badge>
+                          <Badge 
+                            variant={answer.question_type === 'multiple_choice' ? 'default' : 'destructive'} 
+                            className="text-sm"
+                          >
+                            {answer.question_type === 'multiple_choice' ? '객관식 (자동 채점)' : '주관식 (수동 채점)'}
+                          </Badge>
                         </div>
                         
                         <div className="space-y-2">

@@ -114,7 +114,8 @@ export default function AnswerKeyForm({ onBack, onSave, initialData = null }) {
           question: prev.answers.length + 1,
           answer: '',
           score: 5,
-          description: ''
+          description: '',
+          question_type: 'multiple_choice' // 기본값은 객관식으로 설정
         }
       ]
     }));
@@ -481,14 +482,37 @@ export default function AnswerKeyForm({ onBack, onSave, initialData = null }) {
                       </Button>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div>
+                        <Label htmlFor={`question-type-${index}`}>문제 유형 *</Label>
+                        <Select 
+                          value={answer.question_type || 'multiple_choice'} 
+                          onValueChange={(value) => handleAnswerChange(index, 'question_type', value)}
+                        >
+                          <SelectTrigger id={`question-type-${index}`}>
+                            <SelectValue placeholder="문제 유형 선택" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="multiple_choice">객관식 (자동 채점)</SelectItem>
+                            <SelectItem value="short_answer">주관식 (수동 채점)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {answer.question_type === 'multiple_choice' ? 
+                            '객관식 문제는 자동으로 채점됩니다.' : 
+                            '주관식 문제는 수동으로 채점해야 합니다.'}
+                        </p>
+                      </div>
+                      
                       <div>
                         <Label htmlFor={`answer-${index}`}>정답 *</Label>
                         <Input
                           id={`answer-${index}`}
                           value={answer.answer || ''}
                           onChange={(e) => handleAnswerChange(index, 'answer', e.target.value)}
-                          placeholder="정답을 입력하세요"
+                          placeholder={answer.question_type === 'multiple_choice' ? 
+                            "객관식 답안 (예: A, B, C, D, E)" : 
+                            "주관식 모범 답안"}
                         />
                       </div>
                       
