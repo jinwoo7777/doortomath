@@ -8,9 +8,11 @@ import { toast } from 'sonner';
  * 학생 시험 성적 관리를 위한 커스텀 훅
  * @param {Object} student - 학생 정보
  * @param {boolean} isOpen - 모달 열림 상태
+ * @param {Object} externalData - 외부에서 공유되는 데이터
+ * @param {Function} onDataUpdate - 데이터 업데이트 콜백
  * @returns {Object} 시험 성적 관련 상태 및 함수
  */
-export const useExamScores = (student, isOpen) => {
+export const useExamScores = (student, isOpen, externalData = null, onDataUpdate = null) => {
   const [examScores, setExamScores] = useState([]);
   const [examSessions, setExamSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,11 +27,16 @@ export const useExamScores = (student, isOpen) => {
     setMounted(true);
   }, []);
 
+  // 외부 데이터 동기화
   useEffect(() => {
-    if (isOpen && student && mounted) {
+    if (externalData && externalData.examScores && externalData.examSessions) {
+      setExamScores(externalData.examScores);
+      setExamSessions(externalData.examSessions);
+      setLoading(false);
+    } else if (isOpen && student && mounted) {
       fetchExamData();
     }
-  }, [isOpen, student, mounted]);
+  }, [isOpen, student, mounted, externalData]);
 
   const fetchExamData = async () => {
     if (!student?.id) {
@@ -112,8 +119,16 @@ export const useExamScores = (student, isOpen) => {
       }
 
       // 데이터 설정 및 로깅
-      setExamScores(gradesData || []);
-      setExamSessions(submissionsData || []);
+      const newExamScores = gradesData || [];
+      const newExamSessions = submissionsData || [];
+      
+      setExamScores(newExamScores);
+      setExamSessions(newExamSessions);
+      
+      // 외부에 데이터 업데이트 알림
+      if (onDataUpdate) {
+        onDataUpdate(newExamScores, newExamSessions);
+      }
       
       console.log('데이터 로딩 성공:', {
         gradesCount: gradesData?.length || 0,

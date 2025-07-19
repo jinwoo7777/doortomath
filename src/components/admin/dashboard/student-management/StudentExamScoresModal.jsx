@@ -17,7 +17,7 @@ import { getScoreBadge, getExamTypeBadge } from './utils/scoreUtils';
 /**
  * 학생 시험 성적 모달 컴포넌트
  */
-export default function StudentExamScoresModal({ student, isOpen, onClose }) {
+export default function StudentExamScoresModal({ student, isOpen, onClose, studentData, onDataUpdate }) {
   const {
     examScores,
     examSessions,
@@ -34,7 +34,7 @@ export default function StudentExamScoresModal({ student, isOpen, onClose }) {
     filteredSessions,
     getAverageScore,
     getRecentTrend
-  } = useExamScores(student, isOpen);
+  } = useExamScores(student, isOpen, studentData, onDataUpdate);
 
   if (!student || !mounted) return null;
 

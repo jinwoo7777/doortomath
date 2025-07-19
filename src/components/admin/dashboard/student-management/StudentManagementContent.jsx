@@ -24,6 +24,7 @@ import StudentCoursesModal from './StudentCoursesModal';
 import StudentExamScoresModal from './StudentExamScoresModal';
 import StudentCommentModal from './StudentCommentModal';
 import PublicScoresModal from './components/PublicScoresModal';
+import useStudentModalSync from './hooks/useStudentModalSync';
 
 /**
  * 학생 관리 메인 컴포넌트
@@ -39,19 +40,8 @@ const StudentManagementContent = () => {
   const [selectedTeacher, setSelectedTeacher] = useState('all');
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'all');
 
-  // 모달 관련 상태
-  const [isCoursesModalOpen, setIsCoursesModalOpen] = useState(false);
-  const [selectedStudentForCourses, setSelectedStudentForCourses] = useState(null);
-  const [isExamScoresModalOpen, setIsExamScoresModalOpen] = useState(false);
-  const [selectedStudentForScores, setSelectedStudentForScores] = useState(null);
-  const [isEnrollmentModalOpen, setIsEnrollmentModalOpen] = useState(false);
-  const [selectedStudentForEnrollment, setSelectedStudentForEnrollment] = useState(null);
-  const [isMemoModalOpen, setIsMemoModalOpen] = useState(false);
-  const [selectedStudentForMemo, setSelectedStudentForMemo] = useState(null);
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [selectedStudentForPayment, setSelectedStudentForPayment] = useState(null);
-  const [isPublicScoresModalOpen, setIsPublicScoresModalOpen] = useState(false);
-  const [selectedStudentForPublicScores, setSelectedStudentForPublicScores] = useState(null);
+  // 모달 동기화 훅
+  const modalSync = useStudentModalSync();
 
   // 지점 선택 변경 시 강사 선택 초기화
   useEffect(() => {
@@ -206,70 +196,17 @@ const StudentManagementContent = () => {
   }, [students, searchQuery, selectedGrade, selectedBranch, selectedTeacher, activeTab, sortColumn, sortDirection, getStudentGradeAverage]);
 
   // 모달 관련 함수
-  const openCoursesModal = (student) => {
-    setSelectedStudentForCourses(student);
-    setIsCoursesModalOpen(true);
-  };
-
-  const closeCoursesModal = () => {
-    setIsCoursesModalOpen(false);
-    setSelectedStudentForCourses(null);
-  };
-
-  const handleViewExamScores = (student) => {
-    setSelectedStudentForScores(student);
-    setIsExamScoresModalOpen(true);
-  };
-
-  const closeExamScoresModal = () => {
-    setIsExamScoresModalOpen(false);
-    setSelectedStudentForScores(null);
-  };
-
-  const openEnrollmentModal = (student) => {
-    setSelectedStudentForEnrollment(student);
-    setIsEnrollmentModalOpen(true);
-  };
-
-  const closeEnrollmentModal = () => {
-    setIsEnrollmentModalOpen(false);
-    setSelectedStudentForEnrollment(null);
-  };
-
-  const openMemoModal = (student) => {
-    setSelectedStudentForMemo(student);
-    setIsMemoModalOpen(true);
-  };
-
-  const closeMemoModal = () => {
-    setIsMemoModalOpen(false);
-    setSelectedStudentForMemo(null);
-  };
+  // 모달 핸들러들 - 동기화 훅 사용
+  const handleViewExamScores = modalSync.openExamScoresModal;
+  const openCoursesModal = modalSync.openCoursesModal;
+  const openEnrollmentModal = modalSync.openEnrollmentModal;
+  const openMemoModal = modalSync.openMemoModal;
+  const openPublicScoresModal = modalSync.openPublicScoresModal;
   
   // Handle comment updates
   const handleCommentUpdate = () => {
     // Refresh data if needed
     fetchData();
-  };
-
-  const openPaymentModal = (student) => {
-    setSelectedStudentForPayment(student);
-    setIsPaymentModalOpen(true);
-  };
-
-  const closePaymentModal = () => {
-    setIsPaymentModalOpen(false);
-    setSelectedStudentForPayment(null);
-  };
-
-  const openPublicScoresModal = (student) => {
-    setSelectedStudentForPublicScores(student);
-    setIsPublicScoresModalOpen(true);
-  };
-
-  const closePublicScoresModal = () => {
-    setIsPublicScoresModalOpen(false);
-    setSelectedStudentForPublicScores(null);
   };
 
   const handleCoursesUpdate = () => {
@@ -312,11 +249,11 @@ const StudentManagementContent = () => {
                 onEdit={openEditDialog}
                 onDelete={handleDeleteStudent}
                 onTogglePriority={handleTogglePriority}
-                onViewCourses={openCoursesModal}
-                onViewExamScores={handleViewExamScores}
-                onOpenMemo={openMemoModal}
-                onOpenPublicScores={openPublicScoresModal}
-                onOpenEnrollment={openEnrollmentModal}
+                onViewCourses={modalSync.openCoursesModal}
+                onViewExamScores={modalSync.openExamScoresModal}
+                onOpenMemo={modalSync.openMemoModal}
+                onOpenPublicScores={modalSync.openPublicScoresModal}
+                onOpenEnrollment={modalSync.openEnrollmentModal}
                 getStudentSchedules={getStudentSchedules}
                 getStudentGradeAverage={getStudentGradeAverage}
                 session={session}
@@ -347,11 +284,11 @@ const StudentManagementContent = () => {
                 onEdit={openEditDialog}
                 onDelete={handleDeleteStudent}
                 onTogglePriority={handleTogglePriority}
-                onViewCourses={openCoursesModal}
-                onViewExamScores={handleViewExamScores}
-                onOpenMemo={openMemoModal}
-                onOpenPublicScores={openPublicScoresModal}
-                onOpenEnrollment={openEnrollmentModal}
+                onViewCourses={modalSync.openCoursesModal}
+                onViewExamScores={modalSync.openExamScoresModal}
+                onOpenMemo={modalSync.openMemoModal}
+                onOpenPublicScores={modalSync.openPublicScoresModal}
+                onOpenEnrollment={modalSync.openEnrollmentModal}
                 getStudentSchedules={getStudentSchedules}
                 getStudentGradeAverage={getStudentGradeAverage}
                 session={session}
@@ -382,11 +319,11 @@ const StudentManagementContent = () => {
                 onEdit={openEditDialog}
                 onDelete={handleDeleteStudent}
                 onTogglePriority={handleTogglePriority}
-                onViewCourses={openCoursesModal}
-                onViewExamScores={handleViewExamScores}
-                onOpenMemo={openMemoModal}
-                onOpenPublicScores={openPublicScoresModal}
-                onOpenEnrollment={openEnrollmentModal}
+                onViewCourses={modalSync.openCoursesModal}
+                onViewExamScores={modalSync.openExamScoresModal}
+                onOpenMemo={modalSync.openMemoModal}
+                onOpenPublicScores={modalSync.openPublicScoresModal}
+                onOpenEnrollment={modalSync.openEnrollmentModal}
                 getStudentSchedules={getStudentSchedules}
                 getStudentGradeAverage={getStudentGradeAverage}
                 session={session}
@@ -413,32 +350,36 @@ const StudentManagementContent = () => {
 
       {/* 수강 강의 모달 */}
       <StudentCoursesModal
-        isOpen={isCoursesModalOpen}
-        onClose={closeCoursesModal}
-        student={selectedStudentForCourses}
+        isOpen={modalSync.isCoursesModalOpen}
+        onClose={modalSync.closeCoursesModal}
+        student={modalSync.selectedStudent}
         onUpdate={handleCoursesUpdate}
       />
 
       {/* 시험 성적 모달 */}
       <StudentExamScoresModal
-        isOpen={isExamScoresModalOpen}
-        onClose={closeExamScoresModal}
-        student={selectedStudentForScores}
+        isOpen={modalSync.isExamScoresModalOpen}
+        onClose={modalSync.closeExamScoresModal}
+        student={modalSync.selectedStudent}
+        studentData={modalSync.studentData}
+        onDataUpdate={modalSync.updateExamData}
       />
 
       {/* 학생 코멘트 모달 */}
       <StudentCommentModal
-        isOpen={isMemoModalOpen}
-        onClose={closeMemoModal}
-        student={selectedStudentForMemo}
+        isOpen={modalSync.isMemoModalOpen}
+        onClose={modalSync.closeMemoModal}
+        student={modalSync.selectedStudent}
         onUpdate={handleCommentUpdate}
       />
 
       {/* 성적 공개 설정 모달 */}
       <PublicScoresModal
-        isOpen={isPublicScoresModalOpen}
-        onClose={closePublicScoresModal}
-        student={selectedStudentForPublicScores}
+        isOpen={modalSync.isPublicScoresModalOpen}
+        onClose={modalSync.closePublicScoresModal}
+        student={modalSync.selectedStudent}
+        studentData={modalSync.studentData}
+        onSettingsUpdate={modalSync.updatePublicSettings}
       />
 
       {/* 추가 모달들은 필요에 따라 구현 */}

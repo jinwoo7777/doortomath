@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Trophy, User, Phone, Lock, Eye, Calendar } from 'lucide-react';
-import { supabase } from '@/lib/supabase/supabaseClientBrowser';
+import { Loader2, Trophy, User, Phone, Lock, Eye, Calendar, LogOut } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+import bcrypt from 'bcryptjs';
 
 // StudentExamScoresModal의 컴포넌트들 재사용
 import ExamScoreFilters from '@/components/admin/dashboard/student-management/components/ExamScoreFilters';
@@ -19,30 +20,132 @@ import AutoScoreTable from '@/components/admin/dashboard/student-management/comp
 import useExamScores from '@/components/admin/dashboard/student-management/hooks/useExamScores';
 import { getScoreBadge, getExamTypeBadge } from '@/components/admin/dashboard/student-management/utils/scoreUtils';
 
+// 강사 코멘트 컴포넌트
+import StudentCommentsSection from './components/StudentCommentsSection_Simple';
+
 export default function PublicScoresPage({ params }) {
   const router = useRouter();
   const resolvedParams = use(params);
   const token = resolvedParams.token;
   
-  const [step, setStep] = useState('auth'); // 'auth' | 'scores'
+  // 공개 페이지용 Supabase 클라이언트 (인증 없음)
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
+    }
+  );
+  
+  const [step, setStep] = useState('login'); // 'login' | 'scores'
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
   const [error, setError] = useState('');
   const [student, setStudent] = useState(null);
   const [publicConfig, setPublicConfig] = useState(null);
   const [formData, setFormData] = useState({
-    name: '',
-    phone: ''
+    username: '',
+    password: ''
   });
 
-  // 성적 데이터 훅 (student가 설정된 후에만 사용)
-  const examScoresData = useExamScores(student, step === 'scores');
+  // 탭 상태 관리
+  const [activeTab, setActiveTab] = useState('scores');
+  const [selectedSubject, setSelectedSubject] = useState('all');
+  const [selectedPeriod, setSelectedPeriod] = useState('all');
+
+  // 성적 데이터 상태 (직접 관리)
+  const [examScoresData, setExamScoresData] = useState({
+    examScores: [],
+    examSessions: [],
+    loading: false,
+    mounted: true,
+    getSubjects: () => [],
+    filteredScores: [],
+    filteredSessions: [],
+    getAverageScore: () => 0,
+    getRecentTrend: () => 'stable'
+  });
 
   useEffect(() => {
     if (token) {
       validateToken();
     }
   }, [token]);
+
+  // 필터링된 데이터 업데이트
+  useEffect(() => {
+    if (examScoresData.examScores || examScoresData.examSessions) {
+      const filteredScores = examScoresData.examScores.filter(score => {
+        if (selectedSubject !== 'all' && score.schedules?.subject !== selectedSubject) return false;
+        if (selectedPeriod !== 'all') {
+          const examDate = new Date(score.exam_date);
+          const now = new Date();
+          const monthsAgo = parseInt(selectedPeriod);
+          const cutoffDate = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1);
+          if (examDate < cutoffDate) return false;
+        }
+        return true;
+      });
+
+      const filteredSessions = examScoresData.examSessions.filter(session => {
+        if (selectedSubject !== 'all' && session.exam_answer_keys?.subject !== selectedSubject) return false;
+        if (selectedPeriod !== 'all') {
+          const examDate = new Date(session.exam_answer_keys?.exam_date);
+          const now = new Date();
+          const monthsAgo = parseInt(selectedPeriod);
+          const cutoffDate = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1);
+          if (examDate < cutoffDate) return false;
+        }
+        return true;
+      });
+
+      // getSubjects 함수 업데이트
+      const getSubjects = () => {
+        const subjects = new Set();
+        examScoresData.examScores.forEach(score => {
+          if (score.schedules?.subject) {
+            subjects.add(score.schedules.subject);
+          }
+        });
+        examScoresData.examSessions.forEach(session => {
+          if (session.exam_answer_keys?.subject) {
+            subjects.add(session.exam_answer_keys.subject);
+          }
+        });
+        return Array.from(subjects);
+      };
+
+      // getAverageScore 함수 업데이트
+      const getAverageScore = () => {
+        if (filteredScores.length === 0) return 0;
+        const total = filteredScores.reduce((sum, score) => sum + (score.score || 0), 0);
+        return Math.round(total / filteredScores.length);
+      };
+
+      // getRecentTrend 함수 업데이트
+      const getRecentTrend = () => {
+        if (filteredScores.length < 2) return null;
+        const recent = filteredScores.slice(0, 2);
+        const current = recent[0]?.score || 0;
+        const previous = recent[1]?.score || 0;
+        const diff = current - previous;
+        return { current, previous, diff };
+      };
+
+      setExamScoresData(prev => ({
+        ...prev,
+        filteredScores,
+        filteredSessions,
+        getSubjects,
+        getAverageScore,
+        getRecentTrend
+      }));
+    }
+  }, [examScoresData.examScores, examScoresData.examSessions, selectedSubject, selectedPeriod]);
 
   const validateToken = async () => {
     try {
@@ -102,11 +205,62 @@ export default function PublicScoresPage({ params }) {
     setError('');
   };
 
-  const handleAuth = async (e) => {
+  const loadExamScoresData = async (studentId) => {
+    try {
+      // 기존 성적 데이터 조회
+      const { data: gradesData } = await supabase
+        .from('student_grades')
+        .select(`
+          *,
+          schedules (
+            subject,
+            teacher_name,
+            grade
+          )
+        `)
+        .eq('student_id', studentId)
+        .order('exam_date', { ascending: false });
+
+      // 자동 채점 결과 조회
+      const { data: sessionsData } = await supabase
+        .from('student_answer_sessions')
+        .select(`
+          *,
+          exam_answer_keys (
+            exam_title,
+            exam_type,
+            exam_date,
+            subject,
+            total_score,
+            teacher_id,
+            teachers (
+              name
+            )
+          )
+        `)
+        .eq('student_id', studentId)
+        .eq('is_completed', true)
+        .order('started_at', { ascending: false });
+
+      // 데이터 업데이트
+      setExamScoresData(prev => ({
+        ...prev,
+        examScores: gradesData || [],
+        examSessions: sessionsData || [],
+        filteredScores: gradesData || [],
+        filteredSessions: sessionsData || []
+      }));
+
+    } catch (error) {
+      console.error('성적 데이터 로드 오류:', error);
+    }
+  };
+
+  const handleLogin = async (e) => {
     e.preventDefault();
     
-    if (!formData.name.trim() || !formData.phone.trim()) {
-      setError('이름과 전화번호를 모두 입력해주세요.');
+    if (!formData.username.trim() || !formData.password.trim()) {
+      setError('아이디와 비밀번호를 모두 입력해주세요.');
       return;
     }
 
@@ -114,29 +268,98 @@ export default function PublicScoresPage({ params }) {
     setError('');
 
     try {
-      const studentData = publicConfig.students;
+      // 1. 학생 계정 조회 및 비밀번호 확인
+      const { data: accountData, error: accountError } = await supabase
+        .from('student_accounts')
+        .select(`
+          id,
+          student_id,
+          username,
+          password_hash,
+          is_active,
+          login_attempts,
+          locked_until,
+          students!inner (
+            id,
+            full_name,
+            phone,
+            email,
+            grade,
+            school,
+            status
+          )
+        `)
+        .eq('username', formData.username.trim())
+        .eq('is_active', true)
+        .single();
+
+      if (accountError || !accountData) {
+        throw new Error('등록되지 않은 아이디이거나 비활성화된 계정입니다.');
+      }
+
+      // 2. 계정 잠금 확인
+      if (accountData.locked_until && new Date(accountData.locked_until) > new Date()) {
+        throw new Error('계정이 잠겨있습니다. 잠시 후 다시 시도해주세요.');
+      }
+
+      // 3. 비밀번호 확인
+      const isPasswordValid = await verifyPassword(formData.password, accountData.password_hash);
       
-      // 이름과 전화번호 확인
-      if (studentData.full_name.trim() !== formData.name.trim()) {
-        throw new Error('등록된 학생 이름과 일치하지 않습니다.');
+      if (!isPasswordValid) {
+        // 로그인 실패 횟수 증가
+        await supabase
+          .from('student_accounts')
+          .update({ 
+            login_attempts: (accountData.login_attempts || 0) + 1,
+            locked_until: (accountData.login_attempts || 0) >= 4 ? 
+              new Date(Date.now() + 30 * 60 * 1000).toISOString() : null // 5번 실패 시 30분 잠금
+          })
+          .eq('id', accountData.id);
+          
+        throw new Error('비밀번호가 올바르지 않습니다.');
       }
 
-      if (studentData.phone.trim() !== formData.phone.trim()) {
-        throw new Error('등록된 전화번호와 일치하지 않습니다.');
+      // 4. 학생 상태 확인
+      if (accountData.students.status !== 'active') {
+        throw new Error('비활성화된 학생 계정입니다.');
       }
 
-      // 접속 통계 업데이트 (데이터베이스 함수 사용)
+      // 5. 로그인 성공 처리
+      await supabase
+        .from('student_accounts')
+        .update({ 
+          last_login_at: new Date().toISOString(),
+          login_attempts: 0,
+          locked_until: null
+        })
+        .eq('id', accountData.id);
+
+      // 6. 접속 통계 업데이트
       await supabase.rpc('update_access_stats', {
-        p_student_id: studentData.id
+        p_student_id: accountData.student_id
       });
 
-      setStudent(studentData);
+      setStudent(accountData.students);
+      
+      // 성적 데이터 로드
+      await loadExamScoresData(accountData.student_id);
+      
       setStep('scores');
     } catch (error) {
-      console.error('인증 오류:', error);
-      setError(error.message || '인증 중 오류가 발생했습니다.');
+      console.error('로그인 오류:', error);
+      setError(error.message || '로그인 중 오류가 발생했습니다.');
     } finally {
       setAuthLoading(false);
+    }
+  };
+
+  // bcrypt를 사용한 비밀번호 검증 함수
+  const verifyPassword = async (plainPassword, hashedPassword) => {
+    try {
+      return await bcrypt.compare(plainPassword, hashedPassword);
+    } catch (error) {
+      console.error('비밀번호 검증 오류:', error);
+      return false;
     }
   };
 
@@ -148,6 +371,28 @@ export default function PublicScoresPage({ params }) {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const handleLogout = () => {
+    // 상태 초기화
+    setStep('login');
+    setStudent(null);
+    setFormData({ username: '', password: '' });
+    setActiveTab('scores');
+    setSelectedSubject('all');
+    setSelectedPeriod('all');
+    setExamScoresData({
+      examScores: [],
+      examSessions: [],
+      loading: false,
+      mounted: true,
+      getSubjects: () => [],
+      filteredScores: [],
+      filteredSessions: [],
+      getAverageScore: () => 0,
+      getRecentTrend: () => 'stable'
+    });
+    setError('');
   };
 
   if (loading) {
@@ -182,8 +427,8 @@ export default function PublicScoresPage({ params }) {
     );
   }
 
-  // 인증 단계
-  if (step === 'auth') {
+  // 로그인 단계
+  if (step === 'login') {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-md mx-auto px-4">
@@ -191,24 +436,24 @@ export default function PublicScoresPage({ params }) {
             <CardHeader>
               <CardTitle className="text-center text-xl font-semibold flex items-center justify-center space-x-2">
                 <Lock className="h-5 w-5 text-blue-500" />
-                <span>학생 인증</span>
+                <span>학생 로그인</span>
               </CardTitle>
               <p className="text-center text-gray-600 mt-2">
-                성적 조회를 위해 학생 정보를 입력해주세요.
+                성적 조회를 위해 계정으로 로그인해주세요.
               </p>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleAuth} className="space-y-4">
+              <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <Label htmlFor="name">이름 *</Label>
+                  <Label htmlFor="username">아이디 *</Label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <User style={{ width: '16px', height: '16px', color: '#9ca3af', flexShrink: 0 }} />
                     <Input
-                      id="name"
+                      id="username"
                       type="text"
-                      placeholder="등록된 이름을 입력하세요"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      placeholder="아이디를 입력하세요"
+                      value={formData.username}
+                      onChange={(e) => handleInputChange('username', e.target.value)}
                       style={{ flex: 1 }}
                       required
                     />
@@ -216,15 +461,15 @@ export default function PublicScoresPage({ params }) {
                 </div>
 
                 <div>
-                  <Label htmlFor="phone">전화번호 *</Label>
+                  <Label htmlFor="password">비밀번호 *</Label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Phone style={{ width: '16px', height: '16px', color: '#9ca3af', flexShrink: 0 }} />
+                    <Lock style={{ width: '16px', height: '16px', color: '#9ca3af', flexShrink: 0 }} />
                     <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="등록된 전화번호를 입력하세요"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      id="password"
+                      type="password"
+                      placeholder="비밀번호를 입력하세요"
+                      value={formData.password}
+                      onChange={(e) => handleInputChange('password', e.target.value)}
                       style={{ flex: 1 }}
                       required
                     />
@@ -247,22 +492,56 @@ export default function PublicScoresPage({ params }) {
                   {authLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      인증 중...
+                      로그인 중...
                     </>
                   ) : (
                     <>
                       <Eye className="mr-2 h-4 w-4" />
-                      성적 조회하기
+                      로그인
                     </>
                   )}
                 </Button>
+
+                {/* 계정 관련 링크들 */}
+                <div className="space-y-3 pt-4 border-t">
+                  {/* 아이디/비밀번호 찾기 */}
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 mb-2">
+                      아이디나 비밀번호를 잊으셨나요?
+                    </p>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      className="w-full text-blue-600 hover:text-blue-700"
+                      onClick={() => router.push(`/public-scores/${token}/find-account`)}
+                    >
+                      아이디/비밀번호 찾기
+                    </Button>
+                  </div>
+
+                  {/* 회원가입 */}
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 mb-2">
+                      계정이 없으신가요?
+                    </p>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => router.push(`/public-scores/${token}/register`)}
+                    >
+                      학생 회원가입
+                    </Button>
+                  </div>
+                </div>
               </form>
 
               <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium text-gray-800 mb-2">📋 안내사항</h4>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• 학원에 등록된 정확한 이름과 전화번호를 입력해주세요</li>
-                  <li>• 개인정보 보호를 위해 본인 확인 후 조회 가능합니다</li>
+                  <li>• 학원생 계정으로만 성적 조회가 가능합니다</li>
+                  <li>• 계정이 없으신 경우 회원가입을 먼저 진행해주세요</li>
+                  <li>• 5회 이상 로그인 실패 시 30분간 계정이 잠깁니다</li>
                   {publicConfig?.expires_at && (
                     <li>• 조회 가능 기간: {formatDate(publicConfig.expires_at)}까지</li>
                   )}
@@ -278,15 +557,7 @@ export default function PublicScoresPage({ params }) {
   // 성적 조회 단계
   if (step === 'scores' && student && examScoresData) {
     const {
-      examScores,
-      examSessions,
       loading: scoresLoading,
-      selectedSubject,
-      setSelectedSubject,
-      selectedPeriod,
-      setSelectedPeriod,
-      activeTab,
-      setActiveTab,
       mounted,
       getSubjects,
       filteredScores,
@@ -301,10 +572,21 @@ export default function PublicScoresPage({ params }) {
           {/* 헤더 */}
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Trophy className="h-5 w-5 text-yellow-500" />
-                <span>{student.full_name} 학생 학습현황</span>
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center space-x-2">
+                  <Trophy className="h-5 w-5 text-yellow-500" />
+                  <span>{student.full_name} 학생 학습현황</span>
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>로그아웃</span>
+                </Button>
+              </div>
               <div className="flex items-center space-x-4 text-sm text-gray-600">
                 <div className="flex items-center space-x-1">
                   <User className="h-4 w-4" />
@@ -341,9 +623,10 @@ export default function PublicScoresPage({ params }) {
 
             {/* 탭 컨텐츠 */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="scores">성적 이력</TabsTrigger>
                 <TabsTrigger value="sessions">자동 채점 결과</TabsTrigger>
+                <TabsTrigger value="comments">강사 코멘트</TabsTrigger>
               </TabsList>
 
               <TabsContent value="scores" className="space-y-4">
@@ -377,6 +660,13 @@ export default function PublicScoresPage({ params }) {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              <TabsContent value="comments" className="space-y-4">
+                <StudentCommentsSection 
+                  supabase={supabase}
+                  studentId={student.id}
+                />
+              </TabsContent>
             </Tabs>
           </div>
 
@@ -384,8 +674,8 @@ export default function PublicScoresPage({ params }) {
           <Card className="mt-8 border-blue-200 bg-blue-50">
             <CardContent className="pt-6">
               <div className="text-center text-sm text-blue-700">
-                <p className="font-medium">수학의 문 학원</p>
-                <p>문의사항이 있으시면 학원으로 연락해주세요.</p>
+                <p className="font-medium">솔루션 개발은 CodeBoost가 도와드립니다.</p>
+                <p>개발문의: codeboost7@gmail.com / Tel: 010-5682-7859</p>
               </div>
             </CardContent>
           </Card>

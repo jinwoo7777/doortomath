@@ -25,7 +25,7 @@ import { supabase } from '@/lib/supabase/supabaseClientBrowser';
 /**
  * 학생 성적 공개 설정 모달 컴포넌트
  */
-export default function PublicScoresModal({ student, isOpen, onClose }) {
+export default function PublicScoresModal({ student, isOpen, onClose, studentData, onSettingsUpdate }) {
   const [isPublic, setIsPublic] = useState(false);
   const [publicUrl, setPublicUrl] = useState('');
   const [accessCount, setAccessCount] = useState(0);
@@ -150,6 +150,18 @@ export default function PublicScoresModal({ student, isOpen, onClose }) {
           .insert([publicData]);
 
         if (error) throw error;
+      }
+
+      // 상위 컴포넌트에 설정 업데이트 알림
+      if (onSettingsUpdate) {
+        onSettingsUpdate({
+          isPublic,
+          publicUrl,
+          accessCount,
+          todayAccessCount,
+          lastAccessedAt,
+          expiryDate
+        });
       }
 
       onClose();
